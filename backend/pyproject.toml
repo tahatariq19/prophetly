@@ -1,22 +1,41 @@
-[tool.black]
+[tool.ruff]
+# Match Black’s line length and target version
 line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
+target-version = ["py38"]
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
+# Include/exclude patterns like Black
+# Ruff uses `include` for files to lint/format, `exclude` for directories etc.
+include = "\\.pyi?$"
+exclude = [
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".tox",
+  ".venv",
+  "venv",
+  "build",
+  "dist",
+  ".eggs"
+]
+
+# If you want Ruff to format as Black does:
+formatter = "ruff"  # or you can rely on ruff format / --fix
+
+[tool.ruff.lint]
+# Which rules to enable/disable to match Flake8’s behavior
+# Ruff’s defaults cover many of Flake8’s E / W / F rules. We need to ignore ones Flake8 ignored.
+ignore = [
+  "E203",   # same as your Flake8 ignore
+  "W503"
+]
+
+# If you want per-file ignores, you can also use per-file-ignores
+
+[tool.ruff.sort]
+# Equivalent to isort profile = "black" (i.e. import sorting style compatible with Black)
+import-sorting-style = "black"
+
+# You can also set known_first_party, etc., if needed for your project structure
+# known-first-party = ["your_project_package_name"]
+# src = ["src"]   # if you have a src layout
+
