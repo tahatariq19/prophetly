@@ -1,0 +1,14 @@
+# Core dependencies for privacy-first Prophet web interface
+prophet>=1.1.0
+pandas>=1.3.0
+numpy>=1.21.0
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-multipart>=0.0.5
+pydantic>=1.8.0
+
+# Additional dependencies for stateless architecture
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+aiofiles>=0.7.0
+websockets>=10.0

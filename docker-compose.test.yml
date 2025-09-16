@@ -1,0 +1,60 @@
+# Testing environment for Prophet Web Interface
+# Privacy compliance and functionality testing
+
+version: '3.8'
+
+services:
+  backend-test:
+    build: ./backend
+    environment:
+      - ENVIRONMENT=test
+      - LOG_LEVEL=DEBUG
+      - MAX_SESSION_AGE=300  # 5 minutes for testing
+    command: pytest tests/ -v --cov=src --cov-report=term-missing
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+
+  frontend-test:
+    build: ./frontend
+    environment:
+      - NODE_ENV=test
+    command: npm test
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - frontend
+
+  e2e-test:
+    build: ./frontend
+    environment:
+      - NODE_ENV=test
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    command: npm run test:e2e
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+      - frontend
+
+  backend:
+    build: ./backend
+    ports:
+      - "8001:8000"
+    environment:
+      - ENVIRONMENT=test
+      - LOG_LEVEL=DEBUG
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=test
+
+networks:
+  default:
+    name: prophet-web-test

@@ -1,0 +1,39 @@
+services:
+  # Backend API Service
+  - type: web
+    name: prophet-web-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn src.main:app --host 0.0.0.0 --port $PORT"
+    plan: starter  # Can upgrade to standard/pro for more memory
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: https://prophet-web-frontend.onrender.com
+      - key: MAX_SESSION_AGE_HOURS
+        value: 2
+      - key: MAX_MEMORY_MB
+        value: 512
+    healthCheckPath: /api/health
+    
+  # Frontend Static Site
+  - type: static
+    name: prophet-web-frontend
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://prophet-web-backend.onrender.com
+      - key: VITE_ENVIRONMENT
+        value: production
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
