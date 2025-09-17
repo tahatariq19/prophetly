@@ -139,7 +139,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # Vuepress build output
 .vuepress/dist
@@ -242,7 +241,6 @@ results/
 exports/
 
 # Model files and cached data
-models/
 *.pkl
 *.pickle
 *.joblib
