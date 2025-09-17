@@ -12,3 +12,4 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 aiofiles>=0.7.0
 websockets>=10.0
+psutil>=5.8.0
