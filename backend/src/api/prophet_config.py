@@ -3,6 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 
+import pandas as pd
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
@@ -357,3 +358,294 @@ async def import_config_file(
                 status_code=500,
                 detail=f"File import failed: {str(e)}"
             )
+
+
+class AdvancedFeaturesRequest(BaseModel):
+    """Request for advanced Prophet features validation."""
+    
+    config: ForecastConfig = Field(description="Prophet configuration with advanced features")
+    session_id: str = Field(description="Session ID for data validation")
+
+
+class AdvancedFeaturesResponse(BaseModel):
+    """Response for advanced Prophet features validation."""
+    
+    success: bool
+    seasonality_validation: Dict[str, Any] = Field(default_factory=dict)
+    regressor_validation: Dict[str, Any] = Field(default_factory=dict)
+    holiday_validation: Dict[str, Any] = Field(default_factory=dict)
+    mcmc_validation: Dict[str, Any] = Field(default_factory=dict)
+    recommendations: List[str] = Field(default_factory=list)
+
+
+class HolidayCountriesResponse(BaseModel):
+    """Response for available holiday countries."""
+    
+    success: bool
+    countries: List[Dict[str, str]] = Field(default_factory=list)
+
+
+@router.post("/advanced/validate", response_model=AdvancedFeaturesResponse)
+async def validate_advanced_features(
+    request: AdvancedFeaturesRequest
+) -> AdvancedFeaturesResponse:
+    """Validate advanced Prophet features against session data.
+    
+    This endpoint provides detailed validation for custom seasonalities,
+    external regressors, holidays, and MCMC sampling configuration.
+    """
+    with MemoryTracker("validate_advanced_features_endpoint"):
+        try:
+            logger.info("Validating advanced Prophet features for session: %s", request.session_id)
+
+            # Get session data
+            session = session_manager.get_session(request.session_id)
+            if not session:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Session not found"
+                )
+
+            data = session.get_dataframe('processed_data')
+            if data is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No processed data found in session"
+                )
+
+            # Validate advanced features
+            validation_result = prophet_service.validate_config(request.config, data)
+            
+            # Detailed validation for each advanced feature
+            seasonality_validation = _validate_seasonalities(request.config, data)
+            regressor_validation = _validate_regressors(request.config, data)
+            holiday_validation = _validate_holidays(request.config)
+            mcmc_validation = _validate_mcmc_settings(request.config, data)
+
+            recommendations = []
+            recommendations.extend(validation_result.get('recommendations', []))
+            recommendations.extend(seasonality_validation.get('recommendations', []))
+            recommendations.extend(regressor_validation.get('recommendations', []))
+            recommendations.extend(holiday_validation.get('recommendations', []))
+            recommendations.extend(mcmc_validation.get('recommendations', []))
+
+            logger.info("Advanced features validation completed")
+
+            return AdvancedFeaturesResponse(
+                success=True,
+                seasonality_validation=seasonality_validation,
+                regressor_validation=regressor_validation,
+                holiday_validation=holiday_validation,
+                mcmc_validation=mcmc_validation,
+                recommendations=recommendations
+            )
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error("Advanced features validation failed: %s", str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"Advanced validation failed: {str(e)}"
+            )
+
+
+@router.get("/holidays/countries", response_model=HolidayCountriesResponse)
+async def get_holiday_countries() -> HolidayCountriesResponse:
+    """Get available countries for built-in holidays.
+    
+    Returns a list of country codes and names that are supported
+    for built-in holiday effects in Prophet.
+    """
+    with MemoryTracker("get_holiday_countries_endpoint"):
+        try:
+            # Common countries supported by Prophet's holiday functionality
+            countries = [
+                {"code": "US", "name": "United States"},
+                {"code": "CA", "name": "Canada"},
+                {"code": "GB", "name": "United Kingdom"},
+                {"code": "DE", "name": "Germany"},
+                {"code": "FR", "name": "France"},
+                {"code": "IT", "name": "Italy"},
+                {"code": "ES", "name": "Spain"},
+                {"code": "AU", "name": "Australia"},
+                {"code": "JP", "name": "Japan"},
+                {"code": "CN", "name": "China"},
+                {"code": "IN", "name": "India"},
+                {"code": "BR", "name": "Brazil"},
+                {"code": "MX", "name": "Mexico"},
+                {"code": "RU", "name": "Russia"},
+                {"code": "KR", "name": "South Korea"},
+                {"code": "NL", "name": "Netherlands"},
+                {"code": "SE", "name": "Sweden"},
+                {"code": "NO", "name": "Norway"},
+                {"code": "DK", "name": "Denmark"},
+                {"code": "FI", "name": "Finland"}
+            ]
+
+            logger.info("Retrieved %d holiday countries", len(countries))
+
+            return HolidayCountriesResponse(
+                success=True,
+                countries=countries
+            )
+
+        except Exception as e:
+            logger.error("Failed to get holiday countries: %s", str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to retrieve holiday countries: {str(e)}"
+            )
+
+
+def _validate_seasonalities(config: ForecastConfig, data: pd.DataFrame) -> Dict[str, Any]:
+    """Validate custom seasonalities against data."""
+    validation = {
+        'is_valid': True,
+        'errors': [],
+        'warnings': [],
+        'recommendations': [],
+        'seasonalities': []
+    }
+
+    for seasonality in config.custom_seasonalities:
+        seasonality_info = {
+            'name': seasonality.name,
+            'period': seasonality.period,
+            'fourier_order': seasonality.fourier_order,
+            'mode': seasonality.mode,
+            'is_valid': True,
+            'issues': []
+        }
+
+        # Validate period against data frequency
+        if len(data) > 0 and 'ds' in data.columns:
+            data_freq = pd.infer_freq(data['ds'].sort_values())
+            if data_freq:
+                if seasonality.period < 2:
+                    seasonality_info['issues'].append("Period should be at least 2 for meaningful seasonality")
+                    seasonality_info['is_valid'] = False
+
+        # Validate Fourier order
+        if seasonality.fourier_order > seasonality.period / 2:
+            seasonality_info['issues'].append("Fourier order should not exceed period/2")
+            seasonality_info['is_valid'] = False
+
+        # Check for conditional seasonality
+        if seasonality.condition_name:
+            if seasonality.condition_name not in data.columns:
+                seasonality_info['issues'].append(f"Condition column '{seasonality.condition_name}' not found in data")
+                seasonality_info['is_valid'] = False
+
+        if not seasonality_info['is_valid']:
+            validation['is_valid'] = False
+            validation['errors'].extend(seasonality_info['issues'])
+
+        validation['seasonalities'].append(seasonality_info)
+
+    return validation
+
+
+def _validate_regressors(config: ForecastConfig, data: pd.DataFrame) -> Dict[str, Any]:
+    """Validate external regressors against data."""
+    validation = {
+        'is_valid': True,
+        'errors': [],
+        'warnings': [],
+        'recommendations': [],
+        'regressors': []
+    }
+
+    data_columns = set(data.columns) if data is not None else set()
+
+    for regressor in config.regressors:
+        regressor_info = {
+            'name': regressor.name,
+            'mode': regressor.mode,
+            'standardize': regressor.standardize,
+            'prior_scale': regressor.prior_scale,
+            'is_valid': True,
+            'issues': []
+        }
+
+        # Check if regressor column exists in data
+        if regressor.name not in data_columns:
+            regressor_info['issues'].append(f"Regressor column '{regressor.name}' not found in data")
+            regressor_info['is_valid'] = False
+
+        # Check for missing values
+        elif data is not None and regressor.name in data.columns:
+            missing_count = data[regressor.name].isna().sum()
+            if missing_count > 0:
+                regressor_info['issues'].append(f"Regressor has {missing_count} missing values")
+                if missing_count > len(data) * 0.1:  # More than 10% missing
+                    regressor_info['is_valid'] = False
+
+        if not regressor_info['is_valid']:
+            validation['is_valid'] = False
+            validation['errors'].extend(regressor_info['issues'])
+
+        validation['regressors'].append(regressor_info)
+
+    return validation
+
+
+def _validate_holidays(config: ForecastConfig) -> Dict[str, Any]:
+    """Validate holiday configuration."""
+    validation = {
+        'is_valid': True,
+        'errors': [],
+        'warnings': [],
+        'recommendations': [],
+        'built_in_country': config.holidays_country,
+        'custom_holidays_count': len(config.custom_holidays)
+    }
+
+    # Validate custom holidays
+    holiday_names = set()
+    for holiday in config.custom_holidays:
+        if holiday.holiday in holiday_names:
+            validation['errors'].append(f"Duplicate holiday name: {holiday.holiday}")
+            validation['is_valid'] = False
+        holiday_names.add(holiday.holiday)
+
+        if holiday.lower_window > holiday.upper_window:
+            validation['errors'].append(f"Holiday '{holiday.holiday}' has invalid window: lower > upper")
+            validation['is_valid'] = False
+
+    return validation
+
+
+def _validate_mcmc_settings(config: ForecastConfig, data: pd.DataFrame) -> Dict[str, Any]:
+    """Validate MCMC sampling configuration."""
+    validation = {
+        'is_valid': True,
+        'errors': [],
+        'warnings': [],
+        'recommendations': [],
+        'mcmc_samples': config.mcmc_samples,
+        'estimated_time': None,
+        'memory_usage': None
+    }
+
+    if config.mcmc_samples > 0:
+        # Estimate processing time and memory usage
+        data_size = len(data) if data is not None else 0
+        
+        # Rough estimates based on data size and MCMC samples
+        if data_size > 0:
+            estimated_minutes = (config.mcmc_samples * data_size) / 10000  # Rough estimate
+            validation['estimated_time'] = f"{estimated_minutes:.1f} minutes"
+            
+            estimated_mb = (config.mcmc_samples * data_size * 8) / (1024 * 1024)  # Rough memory estimate
+            validation['memory_usage'] = f"{estimated_mb:.1f} MB"
+
+        # Warnings for high MCMC samples
+        if config.mcmc_samples > 1000:
+            validation['warnings'].append("High MCMC sample count may result in slow processing")
+        
+        if config.mcmc_samples > 1500:
+            validation['warnings'].append("Very high MCMC sample count may cause memory issues")
+            validation['recommendations'].append("Consider reducing MCMC samples to 500-1000 for faster processing")
+
+    return validation

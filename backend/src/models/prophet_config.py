@@ -176,17 +176,47 @@ class ForecastConfig(BaseModel):
             # Convert string dates to pandas datetime
             params['changepoints'] = pd.to_datetime(self.changepoints)
         
-        # Handle holidays
-        if self.custom_holidays or self.holidays_country:
-            holidays_df = self._create_holidays_dataframe()
-            if not holidays_df.empty:
-                params['holidays'] = holidays_df
+        # Note: cap and floor are not passed to Prophet constructor
+        # They need to be added to the training data instead
+        
+        # Handle holidays (both built-in and custom)
+        holidays_df = self._create_holidays_dataframe()
+        if not holidays_df.empty:
+            params['holidays'] = holidays_df
         
         return params
     
     def _create_holidays_dataframe(self) -> pd.DataFrame:
-        """Create holidays DataFrame for Prophet."""
+        """Create holidays DataFrame for Prophet with built-in and custom holidays."""
         holidays_data = []
+        
+        # Add built-in holidays by country
+        if self.holidays_country:
+            try:
+                from prophet.make_holidays import make_holidays_df
+                
+                # Create date range for holidays (extend beyond typical forecast horizon)
+                import datetime
+                start_date = datetime.date.today() - datetime.timedelta(days=365*5)  # 5 years back
+                end_date = datetime.date.today() + datetime.timedelta(days=365*5)    # 5 years forward
+                
+                # Get built-in holidays for the country
+                builtin_holidays = make_holidays_df(
+                    year_list=list(range(start_date.year, end_date.year + 1)),
+                    country=self.holidays_country
+                )
+                
+                if not builtin_holidays.empty:
+                    # Add prior scale to built-in holidays
+                    builtin_holidays['prior_scale'] = self.holidays_prior_scale
+                    holidays_data.extend(builtin_holidays.to_dict('records'))
+                    
+            except ImportError:
+                # Fallback if holidays package is not available
+                pass
+            except Exception:
+                # Ignore errors in built-in holiday creation
+                pass
         
         # Add custom holidays
         for holiday in self.custom_holidays:
@@ -197,9 +227,6 @@ class ForecastConfig(BaseModel):
                 'upper_window': holiday.upper_window,
                 'prior_scale': holiday.prior_scale
             })
-        
-        # Built-in holidays would be handled by Prophet's built-in functionality
-        # This is a placeholder for custom holiday handling
         
         return pd.DataFrame(holidays_data) if holidays_data else pd.DataFrame()
     

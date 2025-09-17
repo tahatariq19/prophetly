@@ -112,7 +112,7 @@ class TestProphetModelCreation:
 
         assert isinstance(model, Prophet)
         # Check that custom seasonality was added
-        assert "monthly" in [s['name'] for s in model.seasonalities.values()]
+        assert "monthly" in model.seasonalities
 
     def test_create_model_with_regressors(self, advanced_config):
         """Test creating a model with external regressors."""
@@ -124,15 +124,13 @@ class TestProphetModelCreation:
 
     def test_create_model_invalid_config(self):
         """Test creating a model with invalid configuration."""
-        # Logistic growth without cap should fail
-        config = ForecastConfig(
-            horizon=30,
-            growth="logistic"
-            # Missing cap
-        )
-
-        with pytest.raises(ProphetConfigurationError):
-            prophet_service.create_model(config)
+        # Logistic growth without cap should fail at validation level
+        with pytest.raises(ValueError, match="Cap must be specified for logistic growth"):
+            ForecastConfig(
+                horizon=30,
+                growth="logistic"
+                # Missing cap
+            )
 
 
 class TestProphetModelFitting:
@@ -311,7 +309,7 @@ class TestProphetCrossValidation:
             sample_data,
             initial='365 days',
             period='90 days',
-            horizon='30 days'
+            cv_horizon='30 days'
         )
 
         assert isinstance(cv_results, pd.DataFrame)
@@ -329,7 +327,7 @@ class TestProphetCrossValidation:
             sample_data,
             initial='365 days',
             period='90 days',
-            horizon='30 days'
+            cv_horizon='30 days'
         )
 
         metrics = prophet_service.calculate_performance_metrics(cv_results)
@@ -392,11 +390,9 @@ class TestProphetErrorHandling:
 
     def test_invalid_configuration_error(self):
         """Test error handling for invalid configurations."""
-        # Test missing cap for logistic growth
-        config = ForecastConfig(growth="logistic")  # Missing cap
-
-        with pytest.raises(ProphetConfigurationError):
-            prophet_service.create_model(config)
+        # Test missing cap for logistic growth - should fail at validation level
+        with pytest.raises(ValueError, match="Cap must be specified for logistic growth"):
+            ForecastConfig(growth="logistic")  # Missing cap
 
     def test_fitting_error_handling(self, basic_config):
         """Test error handling during model fitting."""
