@@ -10,6 +10,8 @@ export const useSessionStore = defineStore('session', () => {
   const columnMapping = ref(null)
   const forecastConfig = ref(null)
   const forecastResults = ref(null)
+  const processingHistory = ref([])
+  const processedData = ref(null)
   const processingStatus = ref({
     isProcessing: false,
     stage: null,
@@ -21,6 +23,7 @@ export const useSessionStore = defineStore('session', () => {
   const hasData = computed(() => uploadedData.value !== null)
   const hasConfig = computed(() => forecastConfig.value !== null)
   const hasResults = computed(() => forecastResults.value !== null)
+  const hasProcessingHistory = computed(() => processingHistory.value.length > 0)
   const isProcessing = computed(() => processingStatus.value.isProcessing)
 
   // Actions
@@ -49,6 +52,75 @@ export const useSessionStore = defineStore('session', () => {
 
   function setForecastResults(results) {
     forecastResults.value = results
+  }
+
+  function addProcessingStep(step) {
+    processingHistory.value.push(step)
+  }
+
+  function removeProcessingStep(type, index) {
+    const stepIndex = processingHistory.value.findIndex((step, i) => 
+      step.type === type && i === index
+    )
+    if (stepIndex !== -1) {
+      processingHistory.value.splice(stepIndex, 1)
+    }
+  }
+
+  function clearProcessingSteps(type = null) {
+    if (type) {
+      processingHistory.value = processingHistory.value.filter(step => step.type !== type)
+    } else {
+      processingHistory.value = []
+    }
+  }
+
+  function getProcessingHistory() {
+    return processingHistory.value
+  }
+
+  function setProcessedData(data) {
+    processedData.value = data
+  }
+
+  function getProcessedData() {
+    return processedData.value || uploadedData.value
+  }
+
+  function getColumnMapping() {
+    return columnMapping.value
+  }
+
+  function loadCSVData(csvContent) {
+    // Parse CSV content and set as uploaded data
+    // This is a simplified implementation - in reality would need proper CSV parsing
+    try {
+      const lines = csvContent.split('\n')
+      const headers = lines[0].split(',')
+      const data = lines.slice(1).map(line => {
+        const values = line.split(',')
+        const row = {}
+        headers.forEach((header, index) => {
+          row[header.trim()] = values[index]?.trim()
+        })
+        return row
+      }).filter(row => Object.values(row).some(val => val)) // Remove empty rows
+      
+      setUploadedData(data)
+    } catch (error) {
+      console.error('Error parsing CSV:', error)
+      throw new Error('Invalid CSV format')
+    }
+  }
+
+  function loadSessionData(sessionData) {
+    importSessionData(sessionData)
+    if (sessionData.processingHistory) {
+      processingHistory.value = sessionData.processingHistory
+    }
+    if (sessionData.processedData) {
+      processedData.value = sessionData.processedData
+    }
   }
 
   function updateProcessingStatus(status) {
@@ -99,6 +171,8 @@ export const useSessionStore = defineStore('session', () => {
     columnMapping.value = null
     forecastConfig.value = null
     forecastResults.value = null
+    processingHistory.value = []
+    processedData.value = null
     processingStatus.value = {
       isProcessing: false,
       stage: null,
@@ -117,9 +191,11 @@ export const useSessionStore = defineStore('session', () => {
       sessionId: sessionId.value,
       timestamp: new Date().toISOString(),
       data: uploadedData.value,
+      processedData: processedData.value,
       columnMapping: columnMapping.value,
       config: forecastConfig.value,
-      results: forecastResults.value
+      results: forecastResults.value,
+      processingHistory: processingHistory.value
     }
   }
 
@@ -127,9 +203,11 @@ export const useSessionStore = defineStore('session', () => {
   function importSessionData(sessionData) {
     if (sessionData.sessionId) sessionId.value = sessionData.sessionId
     if (sessionData.data) uploadedData.value = sessionData.data
+    if (sessionData.processedData) processedData.value = sessionData.processedData
     if (sessionData.columnMapping) columnMapping.value = sessionData.columnMapping
     if (sessionData.config) forecastConfig.value = sessionData.config
     if (sessionData.results) forecastResults.value = sessionData.results
+    if (sessionData.processingHistory) processingHistory.value = sessionData.processingHistory
   }
 
   // Get session summary for UI display
@@ -154,12 +232,15 @@ export const useSessionStore = defineStore('session', () => {
     columnMapping,
     forecastConfig,
     forecastResults,
+    processingHistory,
+    processedData,
     processingStatus,
     
     // Getters
     hasData,
     hasConfig,
     hasResults,
+    hasProcessingHistory,
     isProcessing,
     
     // Actions
@@ -168,6 +249,15 @@ export const useSessionStore = defineStore('session', () => {
     setColumnMapping,
     setForecastConfig,
     setForecastResults,
+    addProcessingStep,
+    removeProcessingStep,
+    clearProcessingSteps,
+    getProcessingHistory,
+    setProcessedData,
+    getProcessedData,
+    getColumnMapping,
+    loadCSVData,
+    loadSessionData,
     updateProcessingStatus,
     startProcessing,
     updateProgress,

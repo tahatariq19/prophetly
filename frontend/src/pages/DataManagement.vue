@@ -12,6 +12,9 @@
           
           <!-- Data Management Dashboard Component -->
           <DataManagementDashboard />
+          
+          <!-- Data Preprocessing Component -->
+          <DataPreprocessing />
         </div>
       </div>
     </div>
@@ -20,11 +23,13 @@
 
 <script>
 import DataManagementDashboard from '@/components/DataManagementDashboard.vue'
+import DataPreprocessing from '@/components/DataPreprocessing.vue'
 
 export default {
   name: 'DataManagement',
   components: {
-    DataManagementDashboard
+    DataManagementDashboard,
+    DataPreprocessing
   }
 }
 </script>

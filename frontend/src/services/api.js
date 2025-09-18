@@ -173,3 +173,111 @@ export const performCrossValidation = async (config) => {
   })
   return response.data
 }
+
+// Data preprocessing functions with privacy-first design
+
+// Clean data with specified options
+export const cleanData = async (sessionId, cleaningOptions) => {
+  try {
+    const response = await api.post('/preprocessing/clean', cleaningOptions, {
+      params: { session_id: sessionId },
+      headers: {
+        'X-Processing-Mode': 'memory-only',
+        'X-Data-Cleaning': 'session-based'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 422) {
+      error.message = 'Invalid cleaning options. Please check your configuration.'
+    }
+    throw error
+  }
+}
+
+// Transform data with specified options
+export const transformData = async (sessionId, transformationOptions) => {
+  try {
+    const response = await api.post('/preprocessing/transform', transformationOptions, {
+      params: { session_id: sessionId },
+      headers: {
+        'X-Processing-Mode': 'memory-only',
+        'X-Data-Transform': 'session-based'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 422) {
+      error.message = 'Invalid transformation options. Please check your configuration.'
+    }
+    throw error
+  }
+}
+
+// Validate data for Prophet forecasting
+export const validateForProphet = async (sessionId, dateColumn, valueColumn) => {
+  try {
+    const response = await api.post('/preprocessing/validate-prophet', {
+      date_column: dateColumn,
+      value_column: valueColumn
+    }, {
+      params: { session_id: sessionId },
+      headers: {
+        'X-Validation-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 422) {
+      error.message = 'Invalid column selection. Please check your date and value columns.'
+    }
+    throw error
+  }
+}
+
+// Prepare processed data for download
+export const prepareDownload = async (sessionId) => {
+  try {
+    const response = await api.get(`/preprocessing/download/${sessionId}`, {
+      headers: {
+        'X-Download-Mode': 'client-side-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'No processed data available for download.'
+    }
+    throw error
+  }
+}
+
+// Get processing history for session
+export const getProcessingHistory = async (sessionId) => {
+  try {
+    const response = await api.get(`/preprocessing/session/${sessionId}/processing-history`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// Clear processed data from session
+export const clearProcessedData = async (sessionId) => {
+  try {
+    const response = await api.delete(`/preprocessing/session/${sessionId}/processed-data`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// Get available preprocessing options
+export const getPreprocessingOptions = async () => {
+  try {
+    const response = await api.get('/preprocessing/options')
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
