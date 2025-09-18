@@ -7,6 +7,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from .api.cross_validation import router as cross_validation_router
 from .api.forecast import router as forecast_router
+from .api.model_comparison import router as model_comparison_router
 from .api.preprocessing import router as preprocessing_router
 from .api.prophet_config import router as prophet_config_router
 from .api.session import router as session_router
@@ -45,6 +46,7 @@ app.include_router(preprocessing_router)
 app.include_router(prophet_config_router)
 app.include_router(forecast_router)
 app.include_router(cross_validation_router)
+app.include_router(model_comparison_router)
 
 
 @app.get("/")
