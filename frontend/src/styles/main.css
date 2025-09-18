@@ -1,5 +1,8 @@
 /* Privacy-first Prophet Web Interface Styles */
 
+/* Import Bootstrap Icons */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
 /* CSS Custom Properties for theming */
 :root {
   --primary-color: #0d6efd;
