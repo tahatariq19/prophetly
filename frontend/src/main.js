@@ -9,7 +9,10 @@ import './styles/main.css'
 
 const app = createApp(App)
 
-app.use(createPinia())
+// Create Pinia store instance
+const pinia = createPinia()
+
+app.use(pinia)
 app.use(router)
 
 app.mount('#app')
