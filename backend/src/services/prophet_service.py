@@ -439,15 +439,18 @@ class ProphetService:
 
     def cross_validate(self, model: Prophet, data: pd.DataFrame,
                       initial: str = '730 days', period: str = '180 days',
-                      cv_horizon: str = '365 days') -> pd.DataFrame:
-        """Perform cross-validation on Prophet model.
+                      cv_horizon: str = '365 days', cutoffs: Optional[pd.DatetimeIndex] = None,
+                      parallel: Optional[str] = None) -> pd.DataFrame:
+        """Perform cross-validation on Prophet model with enhanced configuration support.
         
         Args:
             model: Prophet model instance (will be fitted multiple times)
             data: Historical data for cross-validation
             initial: Initial training period
             period: Period between cutoff dates
-            horizon: Forecast horizon for each cutoff
+            cv_horizon: Forecast horizon for each cutoff
+            cutoffs: Optional custom cutoff dates (overrides period)
+            parallel: Optional parallelization method ('processes' or 'threads')
             
         Returns:
             DataFrame with cross-validation results
@@ -460,24 +463,38 @@ class ProphetService:
             try:
                 from prophet.diagnostics import cross_validation
 
-                self.logger.info("Starting cross-validation with initial=%s, period=%s, horizon=%s",
-                               initial, period, cv_horizon)
+                self.logger.info("Starting cross-validation with initial=%s, period=%s, horizon=%s, custom_cutoffs=%s",
+                               initial, period, cv_horizon, cutoffs is not None)
 
                 # Fit the model with the data if not already fitted
                 if not hasattr(model, 'history') or model.history is None:
                     self.logger.debug("Fitting model for cross-validation")
                     model.fit(data)
 
-                # Perform cross-validation
-                cv_results = cross_validation(
-                    model,
-                    cv_horizon,
-                    period=period,
-                    initial=initial
-                )
+                # Prepare cross-validation parameters
+                cv_params = {
+                    'horizon': cv_horizon,
+                    'initial': initial
+                }
 
-                self.logger.info("Cross-validation completed with %d cutoffs",
-                               len(cv_results['cutoff'].unique()))
+                # Add period or cutoffs
+                if cutoffs is not None:
+                    cv_params['cutoffs'] = cutoffs
+                    self.logger.info("Using %d custom cutoffs", len(cutoffs))
+                else:
+                    cv_params['period'] = period
+
+                # Add parallel processing if specified
+                if parallel in ['processes', 'threads']:
+                    cv_params['parallel'] = parallel
+                    self.logger.info("Using parallel processing: %s", parallel)
+
+                # Perform cross-validation
+                cv_results = cross_validation(model, **cv_params)
+
+                cutoff_count = len(cv_results['cutoff'].unique())
+                self.logger.info("Cross-validation completed with %d cutoffs and %d predictions",
+                               cutoff_count, len(cv_results))
                 return cv_results
 
             except Exception as e:
