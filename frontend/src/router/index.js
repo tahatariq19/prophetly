@@ -4,6 +4,7 @@ import { useUserPreferencesStore } from '../stores/userPreferences'
 // Lazy-loaded components for better performance
 const Dashboard = () => import('../pages/Dashboard.vue')
 const Upload = () => import('../pages/Upload.vue')
+const DataManagement = () => import('../pages/DataManagement.vue')
 const Configure = () => import('../pages/Configure.vue')
 const Results = () => import('../pages/Results.vue')
 const Privacy = () => import('../pages/Privacy.vue')
@@ -25,6 +26,16 @@ const routes = [
     meta: {
       title: 'Upload Data - Prophet Web Interface',
       description: 'Upload your time series data for forecasting',
+      requiresPrivacyAcceptance: true
+    }
+  },
+  {
+    path: '/data',
+    name: 'DataManagement',
+    component: DataManagement,
+    meta: {
+      title: 'Data Management - Prophet Web Interface',
+      description: 'Manage your session data with privacy-first controls',
       requiresPrivacyAcceptance: true
     }
   },

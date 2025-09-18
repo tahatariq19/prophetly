@@ -65,16 +65,16 @@
                 <div class="col-12">
                   <h3>Quick Actions</h3>
                   <div class="row mt-3">
-                    <div class="col-md-3">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                       <div class="card h-100">
                         <div class="card-body text-center">
-                          <h5>📊 Upload Data</h5>
+                          <h6>📊 Upload Data</h6>
                           <p class="text-muted small">
                             Upload your CSV time series data
                           </p>
                           <router-link 
                             to="/upload" 
-                            class="btn btn-primary"
+                            class="btn btn-primary btn-sm"
                             :class="{ disabled: !privacySettings.acceptedPrivacyNotice }"
                           >
                             Upload
@@ -83,16 +83,34 @@
                       </div>
                     </div>
                     
-                    <div class="col-md-3">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                       <div class="card h-100">
                         <div class="card-body text-center">
-                          <h5>⚙️ Configure</h5>
+                          <h6>📋 Manage Data</h6>
+                          <p class="text-muted small">
+                            View data quality and column mapping
+                          </p>
+                          <router-link 
+                            to="/data" 
+                            class="btn btn-outline-primary btn-sm"
+                            :class="{ disabled: !sessionSummary.hasData }"
+                          >
+                            Manage
+                          </router-link>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body text-center">
+                          <h6>⚙️ Configure</h6>
                           <p class="text-muted small">
                             Set up Prophet parameters
                           </p>
                           <router-link 
                             to="/configure" 
-                            class="btn btn-outline-primary"
+                            class="btn btn-outline-primary btn-sm"
                             :class="{ disabled: !sessionSummary.hasData }"
                           >
                             Configure
@@ -101,16 +119,16 @@
                       </div>
                     </div>
                     
-                    <div class="col-md-3">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                       <div class="card h-100">
                         <div class="card-body text-center">
-                          <h5>📈 Results</h5>
+                          <h6>📈 Results</h6>
                           <p class="text-muted small">
                             View forecast results
                           </p>
                           <router-link 
                             to="/results" 
-                            class="btn btn-outline-primary"
+                            class="btn btn-outline-primary btn-sm"
                             :class="{ disabled: !sessionSummary.hasResults }"
                           >
                             Results
@@ -119,14 +137,14 @@
                       </div>
                     </div>
                     
-                    <div class="col-md-3">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                       <div class="card h-100">
                         <div class="card-body text-center">
-                          <h5>🔒 Privacy</h5>
+                          <h6>🔒 Privacy</h6>
                           <p class="text-muted small">
                             Learn about data protection
                           </p>
-                          <router-link to="/privacy" class="btn btn-outline-info">
+                          <router-link to="/privacy" class="btn btn-outline-info btn-sm">
                             Privacy
                           </router-link>
                         </div>

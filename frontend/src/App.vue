@@ -48,6 +48,17 @@
             <li class="nav-item">
               <router-link 
                 class="nav-link" 
+                to="/data" 
+                active-class="active"
+                @click="closeNavbarOnMobile"
+              >
+                <i class="bi bi-table me-1 d-md-none"></i>
+                Data
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link 
+                class="nav-link" 
                 to="/configure" 
                 active-class="active"
                 @click="closeNavbarOnMobile"

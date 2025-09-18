@@ -113,13 +113,35 @@ export const uploadFile = async (file, onProgress = null) => {
   }
   
   try {
-    const response = await api.post('/upload', formData, config)
+    const response = await api.post('/upload/csv', formData, config)
     return response.data
   } catch (error) {
     // Add specific file upload error handling
     if (error.response?.status === 415) {
       error.message = 'Unsupported file type. Please upload a CSV file only.'
     }
+    throw error
+  }
+}
+
+// Get data quality assessment for session
+export const getDataQuality = async (sessionId) => {
+  try {
+    const response = await api.get(`/upload/session/${sessionId}/data-quality`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// Get data preview for session
+export const getDataPreview = async (sessionId, rows = 10, offset = 0) => {
+  try {
+    const response = await api.get(`/upload/session/${sessionId}/data-preview`, {
+      params: { rows, offset }
+    })
+    return response.data
+  } catch (error) {
     throw error
   }
 }

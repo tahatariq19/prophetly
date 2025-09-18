@@ -355,14 +355,28 @@ export default {
           message: 'Data processed successfully'
         }
 
-        // Store data in session
-        sessionStore.setUploadedData(response.data, response.preview)
+        // Store data in session with enhanced preview data
+        const enhancedPreview = {
+          columns: response.data_preview?.columns || [],
+          sampleRows: response.data_preview?.rows || [],
+          totalRows: response.data_preview?.total_rows || 0,
+          columnInfo: response.column_info || {},
+          stats: {
+            total_rows: response.file_info?.rows || 0,
+            total_columns: response.file_info?.columns || 0,
+            memory_usage_mb: response.file_info?.memory_usage_bytes ? response.file_info.memory_usage_bytes / (1024 * 1024) : 0,
+            completely_empty_rows: 0 // Will be calculated from quality assessment
+          },
+          quality: response.data_quality || {}
+        }
+
+        sessionStore.setUploadedData(response, enhancedPreview)
 
         // Emit success event
         emit('file-uploaded', {
           file: selectedFile.value,
-          data: response.data,
-          preview: response.preview
+          data: response,
+          preview: enhancedPreview
         })
 
       } catch (error) {

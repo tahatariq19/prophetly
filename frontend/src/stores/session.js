@@ -7,6 +7,7 @@ export const useSessionStore = defineStore('session', () => {
   const sessionId = ref(null)
   const uploadedData = ref(null)
   const dataPreview = ref(null)
+  const columnMapping = ref(null)
   const forecastConfig = ref(null)
   const forecastResults = ref(null)
   const processingStatus = ref({
@@ -36,6 +37,10 @@ export const useSessionStore = defineStore('session', () => {
     if (!sessionId.value) {
       generateSessionId()
     }
+  }
+
+  function setColumnMapping(mapping) {
+    columnMapping.value = mapping
   }
 
   function setForecastConfig(config) {
@@ -91,6 +96,7 @@ export const useSessionStore = defineStore('session', () => {
     sessionId.value = null
     uploadedData.value = null
     dataPreview.value = null
+    columnMapping.value = null
     forecastConfig.value = null
     forecastResults.value = null
     processingStatus.value = {
@@ -111,6 +117,7 @@ export const useSessionStore = defineStore('session', () => {
       sessionId: sessionId.value,
       timestamp: new Date().toISOString(),
       data: uploadedData.value,
+      columnMapping: columnMapping.value,
       config: forecastConfig.value,
       results: forecastResults.value
     }
@@ -120,6 +127,7 @@ export const useSessionStore = defineStore('session', () => {
   function importSessionData(sessionData) {
     if (sessionData.sessionId) sessionId.value = sessionData.sessionId
     if (sessionData.data) uploadedData.value = sessionData.data
+    if (sessionData.columnMapping) columnMapping.value = sessionData.columnMapping
     if (sessionData.config) forecastConfig.value = sessionData.config
     if (sessionData.results) forecastResults.value = sessionData.results
   }
@@ -143,6 +151,7 @@ export const useSessionStore = defineStore('session', () => {
     sessionId,
     uploadedData,
     dataPreview,
+    columnMapping,
     forecastConfig,
     forecastResults,
     processingStatus,
@@ -156,6 +165,7 @@ export const useSessionStore = defineStore('session', () => {
     // Actions
     generateSessionId,
     setUploadedData,
+    setColumnMapping,
     setForecastConfig,
     setForecastResults,
     updateProcessingStatus,
