@@ -338,30 +338,91 @@ body {
   color: var(--warning-color);
 }
 
-/* Responsive utilities */
-@media (max-width: 768px) {
-  .notifications-container {
-    right: 10px;
-    left: 10px;
-    max-width: none;
+/* Mobile-first responsive utilities */
+/* Base mobile styles (default) */
+.container-fluid {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.btn-group {
+  flex-direction: column;
+  width: 100%;
+}
+
+.btn-group .btn {
+  border-radius: 0.375rem !important;
+  margin-bottom: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+  margin-bottom: 0;
+}
+
+.chart-controls {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.notifications-container {
+  right: 10px;
+  left: 10px;
+  max-width: none;
+  top: 70px;
+}
+
+/* Tablet styles */
+@media (min-width: 768px) {
+  .container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
   
   .card-body {
-    padding: 1rem;
-  }
-  
-  .chart-controls {
-    flex-direction: column;
-    align-items: stretch;
+    padding: 1.5rem;
   }
   
   .btn-group {
-    flex-direction: column;
+    flex-direction: row;
+    width: auto;
   }
   
   .btn-group .btn {
-    border-radius: 0.375rem !important;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0;
+    margin-right: 0;
+  }
+  
+  .chart-controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .notifications-container {
+    right: 20px;
+    left: auto;
+    max-width: 400px;
+    top: 80px;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 992px) {
+  .container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1200px) {
+  .container-fluid {
+    max-width: 1400px;
   }
 }
 
@@ -429,20 +490,152 @@ body {
   }
 }
 
+/* Enhanced error boundary styles */
+.error-boundary {
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.privacy-notice-small {
+  animation: slideInUp 0.3s ease-out 0.2s both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile touch improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .nav-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .form-control,
+  .form-select {
+    min-height: 44px;
+  }
+  
+  .card:hover {
+    transform: none;
+  }
+  
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* Loading state improvements */
+.loading-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-spinner {
+  animation: slideInDown 0.3s ease-out 0.1s both;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Privacy-focused styling */
+.privacy-badge,
+.privacy-notice,
+.privacy-notice-small,
+.privacy-notice-loading {
+  border-left: 3px solid var(--success-color);
+}
+
+[data-theme="dark"] .privacy-badge,
+[data-theme="dark"] .privacy-notice,
+[data-theme="dark"] .privacy-notice-small {
+  border-left-color: #66d966;
+}
+
+/* Improved focus indicators for accessibility */
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--primary-color);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 10000;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
 /* Print styles */
 @media print {
   .navbar,
   .notifications-container,
-  .loading-overlay {
+  .loading-overlay,
+  .error-boundary {
     display: none !important;
   }
   
   .card {
     box-shadow: none;
     border: 1px solid #000;
+    break-inside: avoid;
   }
   
   .btn {
     display: none;
+  }
+  
+  .main-content {
+    padding: 0;
+  }
+  
+  .privacy-notice,
+  .privacy-notice-small {
+    border: 1px solid #000;
+    background: #f8f9fa !important;
   }
 }
