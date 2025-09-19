@@ -149,10 +149,28 @@ export const getDataPreview = async (sessionId, rows = 10, offset = 0) => {
 // Forecast generation with progress tracking
 export const generateForecast = async (config, onProgress = null) => {
   try {
-    const response = await api.post('/forecast', config, {
+    const response = await api.post('/forecast/generate', config, {
       headers: {
         'X-Processing-Mode': 'memory-only',
         'X-Progress-Tracking': onProgress ? 'enabled' : 'disabled'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 422) {
+      error.message = 'Invalid forecast configuration. Please check your parameters.'
+    }
+    throw error
+  }
+}
+
+// Validate forecast request before execution
+export const validateForecastRequest = async (config) => {
+  try {
+    const response = await api.post('/forecast/validate', config, {
+      headers: {
+        'X-Validation-Mode': 'memory-only',
+        'X-Processing-Mode': 'stateless'
       }
     })
     return response.data

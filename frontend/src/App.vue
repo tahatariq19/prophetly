@@ -151,23 +151,8 @@
       </div>
     </nav>
     
-    <!-- Notifications -->
-    <div class="notifications-container">
-      <div 
-        v-for="notification in notifications" 
-        :key="notification.id"
-        class="alert alert-dismissible fade show"
-        :class="`alert-${getNotificationClass(notification.type)}`"
-        role="alert"
-      >
-        {{ notification.message }}
-        <button 
-          type="button" 
-          class="btn-close" 
-          @click="removeNotification(notification.id)"
-        ></button>
-      </div>
-    </div>
+    <!-- Notification Center -->
+    <NotificationCenter @action="handleNotificationAction" />
     
     <!-- Privacy-Focused Error Boundary -->
     <div v-if="hasError && !isLoading" class="error-boundary">
@@ -416,18 +401,23 @@
 
 <script>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from './stores/app'
 import { useUserPreferencesStore } from './stores/userPreferences'
 import { useSessionStore } from './stores/session'
 import { checkHealth } from './services/api'
 import ErrorBoundary from './components/ErrorBoundary.vue'
+import NotificationCenter from './components/NotificationCenter.vue'
+import { notificationService } from './services/notifications'
 
 export default {
   name: 'App',
   components: {
-    ErrorBoundary
+    ErrorBoundary,
+    NotificationCenter
   },
   setup() {
+    const router = useRouter()
     const appStore = useAppStore()
     const preferencesStore = useUserPreferencesStore()
     const sessionStore = useSessionStore()
@@ -553,6 +543,50 @@ export default {
       appStore.clearError()
       sessionStore.stopProcessing()
     }
+
+    // Handle notification actions
+    const handleNotificationAction = (actionData) => {
+      const { action } = actionData
+      
+      switch (action) {
+        case 'download-results':
+          // Navigate to results page for download
+          router.push('/results')
+          break
+          
+        case 'extend-session':
+          // Extend session (handled by SessionResultManager)
+          notificationService.addNotification({
+            type: 'success',
+            title: 'Session Extended',
+            message: 'Your session has been extended for another 2 hours.',
+            icon: 'bi-clock-history'
+          })
+          break
+          
+        case 'new-session':
+          // Clear session and navigate to upload
+          sessionStore.clearSession()
+          router.push('/upload')
+          break
+          
+        case 'view-results':
+          router.push('/results')
+          break
+          
+        case 'retry-forecast':
+          // This would be handled by the forecast component
+          break
+          
+        case 'retry-request':
+          // Retry last failed request
+          window.location.reload()
+          break
+          
+        default:
+          console.log('Unhandled notification action:', action)
+      }
+    }
     
     // Lifecycle
     onMounted(async () => {
@@ -625,7 +659,8 @@ export default {
       savePreferences,
       cancelPreferences,
       handleComponentError,
-      handleRetry
+      handleRetry,
+      handleNotificationAction
     }
   }
 }

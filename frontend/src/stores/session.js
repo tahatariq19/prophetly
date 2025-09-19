@@ -224,6 +224,31 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
+  // Schedule automatic cleanup notification
+  function scheduleCleanupNotification(callback, delayMinutes = 110) {
+    // Schedule notification 10 minutes before 2-hour expiry
+    const delay = delayMinutes * 60 * 1000
+    setTimeout(() => {
+      if (hasData.value || hasConfig.value || hasResults.value) {
+        callback()
+      }
+    }, delay)
+  }
+
+  // Check if session should be cleaned up
+  function shouldCleanupSession(maxAgeMinutes = 120) {
+    if (!sessionId.value) return false
+    
+    // Extract timestamp from session ID
+    const sessionTimestamp = sessionId.value.split('_')[1]
+    if (!sessionTimestamp) return false
+    
+    const sessionAge = Date.now() - parseInt(sessionTimestamp)
+    const maxAge = maxAgeMinutes * 60 * 1000
+    
+    return sessionAge > maxAge
+  }
+
   return {
     // State
     sessionId,
@@ -266,6 +291,8 @@ export const useSessionStore = defineStore('session', () => {
     clearSession,
     exportSessionData,
     importSessionData,
-    getSessionSummary
+    getSessionSummary,
+    scheduleCleanupNotification,
+    shouldCleanupSession
   }
 })
