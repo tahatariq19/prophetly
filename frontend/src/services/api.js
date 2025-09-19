@@ -184,12 +184,170 @@ export const validateForecastRequest = async (config) => {
 
 // Cross-validation with privacy assurance
 export const performCrossValidation = async (config) => {
-  const response = await api.post('/validate', config, {
+  const response = await api.post('/cross-validation/execute', config, {
     headers: {
       'X-Validation-Mode': 'memory-only'
     }
   })
   return response.data
+}
+
+// Validate cross-validation configuration
+export const validateCrossValidationConfig = async (config) => {
+  try {
+    const response = await api.post('/cross-validation/validate-config', config, {
+      headers: {
+        'X-Validation-Mode': 'memory-only',
+        'X-Processing-Mode': 'stateless'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 422) {
+      error.message = 'Invalid cross-validation configuration. Please check your parameters.'
+    }
+    throw error
+  }
+}
+
+// Model comparison functions
+export const storeModelResult = async (sessionId, modelData) => {
+  try {
+    const response = await api.post('/model-comparison/store-result', null, {
+      params: {
+        session_id: sessionId,
+        model_name: modelData.name,
+        config_json: modelData.configJson,
+        forecast_data: modelData.forecastData,
+        components: modelData.components,
+        cv_metrics: modelData.cvMetrics,
+        training_metrics: modelData.trainingMetrics,
+        processing_time_seconds: modelData.processingTimeSeconds,
+        data_points: modelData.dataPoints
+      },
+      headers: {
+        'X-Storage-Mode': 'memory-only',
+        'X-Session-Based': 'true'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 422) {
+      error.message = 'Invalid model data. Please check your model configuration.'
+    }
+    throw error
+  }
+}
+
+// Get models for comparison
+export const getSessionModels = async (sessionId) => {
+  try {
+    const response = await api.get(`/model-comparison/session/${sessionId}/models`, {
+      headers: {
+        'X-Retrieval-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'No models found in session or session expired.'
+    }
+    throw error
+  }
+}
+
+// Compare models
+export const compareModels = async (sessionId, modelIds, options = {}) => {
+  try {
+    const response = await api.post('/model-comparison/compare', {
+      session_id: sessionId,
+      model_ids: modelIds,
+      include_parameters: options.includeParameters !== false,
+      include_performance: options.includePerformance !== false,
+      include_forecasts: options.includeForecasts === true
+    }, {
+      headers: {
+        'X-Comparison-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 400) {
+      error.message = 'Invalid comparison request. Please check your model selection.'
+    }
+    throw error
+  }
+}
+
+// Get comparison summary
+export const getComparisonSummary = async (sessionId, modelIds) => {
+  try {
+    const response = await api.post('/model-comparison/compare/summary', {
+      session_id: sessionId,
+      model_ids: modelIds
+    }, {
+      headers: {
+        'X-Summary-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 400) {
+      error.message = 'Invalid summary request. Please check your model selection.'
+    }
+    throw error
+  }
+}
+
+// Get model details
+export const getModelDetails = async (sessionId, modelId) => {
+  try {
+    const response = await api.get(`/model-comparison/session/${sessionId}/model/${modelId}`, {
+      headers: {
+        'X-Retrieval-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'Model not found in session or session expired.'
+    }
+    throw error
+  }
+}
+
+// Delete model from session
+export const deleteModel = async (sessionId, modelId) => {
+  try {
+    const response = await api.delete(`/model-comparison/session/${sessionId}/model/${modelId}`, {
+      headers: {
+        'X-Deletion-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'Model not found in session or session expired.'
+    }
+    throw error
+  }
+}
+
+// Cleanup session models
+export const cleanupSessionModels = async (sessionId) => {
+  try {
+    const response = await api.delete(`/model-comparison/session/${sessionId}/models`, {
+      headers: {
+        'X-Cleanup-Mode': 'memory-only'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'Session not found or already expired.'
+    }
+    throw error
+  }
 }
 
 // Data preprocessing functions with privacy-first design
