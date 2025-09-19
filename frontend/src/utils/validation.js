@@ -215,6 +215,91 @@ export const prophetValidation = {
 }
 
 /**
+ * Standalone Prophet configuration validation function
+ * Used by configuration components for real-time validation
+ */
+export const validateProphetConfig = (config) => {
+  const errors = []
+  
+  // Validate horizon
+  if (!config.horizon || config.horizon < 1 || config.horizon > 365) {
+    errors.push({
+      field: 'horizon',
+      message: 'Horizon must be between 1 and 365 days'
+    })
+  }
+  
+  // Validate interval width
+  if (config.interval_width < 0.01 || config.interval_width > 0.99) {
+    errors.push({
+      field: 'interval_width',
+      message: 'Interval width must be between 0.01 and 0.99'
+    })
+  }
+  
+  // Validate growth mode and carrying capacity
+  if (config.growth === 'logistic') {
+    if (!config.cap || config.cap <= 0) {
+      errors.push({
+        field: 'cap',
+        message: 'Carrying capacity is required for logistic growth and must be positive'
+      })
+    }
+  }
+  
+  // Validate holiday country if holidays are enabled
+  if (config.include_holidays && !config.holiday_country) {
+    errors.push({
+      field: 'holiday_country',
+      message: 'Country selection is required when holidays are enabled'
+    })
+  }
+  
+  // Validate prior scales if provided
+  if (config.changepoint_prior_scale !== undefined) {
+    if (config.changepoint_prior_scale < 0.001 || config.changepoint_prior_scale > 0.5) {
+      errors.push({
+        field: 'changepoint_prior_scale',
+        message: 'Changepoint prior scale must be between 0.001 and 0.5'
+      })
+    }
+  }
+  
+  if (config.seasonality_prior_scale !== undefined) {
+    if (config.seasonality_prior_scale < 0.01 || config.seasonality_prior_scale > 100) {
+      errors.push({
+        field: 'seasonality_prior_scale',
+        message: 'Seasonality prior scale must be between 0.01 and 100'
+      })
+    }
+  }
+  
+  if (config.holidays_prior_scale !== undefined) {
+    if (config.holidays_prior_scale < 0.01 || config.holidays_prior_scale > 100) {
+      errors.push({
+        field: 'holidays_prior_scale',
+        message: 'Holidays prior scale must be between 0.01 and 100'
+      })
+    }
+  }
+  
+  // Validate MCMC samples
+  if (config.mcmc_samples !== undefined) {
+    if (config.mcmc_samples < 0 || config.mcmc_samples > 2000) {
+      errors.push({
+        field: 'mcmc_samples',
+        message: 'MCMC samples must be between 0 and 2000'
+      })
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
+/**
  * Data validation utilities
  */
 export const dataValidation = {
