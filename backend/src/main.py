@@ -1,7 +1,7 @@
 # Prophet Web Interface Backend
 # Privacy-first FastAPI application
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
@@ -16,6 +16,13 @@ from .api.upload import router as upload_router
 from .config import settings
 from .services.session_manager import session_manager
 from .utils.memory import get_memory_usage
+from .utils.error_handler import create_http_exception_handler, create_general_exception_handler
+from .middleware.error_middleware import (
+    PrivacyErrorMiddleware,
+    RequestValidationMiddleware,
+    RateLimitMiddleware,
+    MemoryMonitoringMiddleware
+)
 
 app = FastAPI(
     title="Prophet Web Interface API",
@@ -24,6 +31,12 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
 )
+
+# Add privacy-focused error handling middleware (order matters)
+app.add_middleware(PrivacyErrorMiddleware, enable_request_logging=True)
+app.add_middleware(RequestValidationMiddleware, max_request_size=10 * 1024 * 1024)  # 10MB
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
+app.add_middleware(MemoryMonitoringMiddleware, max_memory_mb=512)
 
 # Security middleware
 app.add_middleware(
@@ -39,6 +52,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+# Add exception handlers
+app.add_exception_handler(HTTPException, create_http_exception_handler())
+app.add_exception_handler(Exception, create_general_exception_handler())
 
 # Include API routers
 app.include_router(session_router)
