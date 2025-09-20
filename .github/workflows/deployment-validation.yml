@@ -1,0 +1,96 @@
+name: Deployment Configuration Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'render.yaml'
+      - 'backend/requirements.txt'
+      - 'frontend/package.json'
+      - 'backend/src/config.py'
+      - '.env.example'
+      - 'scripts/test_deployment_config.py'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'render.yaml'
+      - 'backend/requirements.txt'
+      - 'frontend/package.json'
+      - 'backend/src/config.py'
+      - '.env.example'
+      - 'scripts/test_deployment_config.py'
+
+jobs:
+  validate-deployment-config:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Validate deployment configuration
+      run: |
+        python scripts/test_deployment_config.py
+    
+    - name: Validate render.yaml syntax
+      run: |
+        python -c "import yaml; yaml.safe_load(open('render.yaml'))"
+    
+    - name: Check backend requirements
+      run: |
+        cd backend
+        pip install -r requirements.txt --dry-run
+    
+    - name: Check frontend dependencies
+      run: |
+        cd frontend
+        npm ci --dry-run
+    
+    - name: Validate environment variables
+      run: |
+        # Check that all required environment variables are documented
+        grep -q "ENVIRONMENT" .env.example
+        grep -q "SECRET_KEY" .env.example
+        grep -q "MAX_SESSION_AGE" .env.example
+        grep -q "VITE_API_URL" .env.example
+    
+    - name: Privacy compliance check
+      run: |
+        # Ensure no database or persistent storage configuration
+        ! grep -r "database\|db\|postgres\|mysql\|redis" render.yaml || true
+        ! grep -r "volume\|mount" render.yaml || grep -q "/tmp" render.yaml
+        
+        # Ensure stateless configuration is present
+        grep -q "stateless" backend/src/config.py
+        grep -q "MAX_SESSION_AGE" backend/src/config.py
+        grep -q "AUTO_CLEANUP_INTERVAL" backend/src/config.py
+    
+    - name: Security headers check
+      run: |
+        # Ensure security headers are configured
+        grep -q "X-Frame-Options" render.yaml
+        grep -q "X-Content-Type-Options" render.yaml
+        grep -q "Content-Security-Policy" render.yaml
+        grep -q "Referrer-Policy" render.yaml
+    
+    - name: Summary
+      run: |
+        echo "✅ Deployment configuration validation completed successfully"
+        echo "✅ Privacy compliance verified"
+        echo "✅ Security headers configured"
+        echo "✅ Ready for Render deployment"

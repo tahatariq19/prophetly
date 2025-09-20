@@ -78,6 +78,40 @@ npm run test:e2e
 - **Processing**: In-memory Prophet forecasting
 - **Deployment**: Render platform ready
 
+## Deployment
+
+### Render Platform (Recommended)
+
+The application is configured for automatic deployment on Render:
+
+1. **Connect Repository**: Link your GitHub repository to Render
+2. **Blueprint Deployment**: Render automatically detects `render.yaml`
+3. **Automatic Scaling**: Built-in scaling and health monitoring
+4. **Privacy Compliance**: Stateless architecture with automatic cleanup
+
+```bash
+# Test deployment configuration
+python scripts/test_deployment_config.py
+
+# Validate deployed services
+python scripts/validate_render_deployment.py
+```
+
+See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for detailed deployment instructions.
+
+### Local Production Testing
+
+```bash
+# Test production build locally
+docker-compose -f docker-compose.prod.yml up --build
+```
+
+## Documentation
+
+- **[Deployment Guide](./RENDER_DEPLOYMENT.md)**: Complete Render deployment instructions
+- **[Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)**: Step-by-step deployment validation
+- **[Development Guide](./DEVELOPMENT.md)**: Local development setup and guidelines
+
 ## License
 
 MIT License - see LICENSE file for details

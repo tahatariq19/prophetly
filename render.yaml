@@ -1,39 +1,153 @@
 services:
-  # Backend API Service
+  # Backend API Service - Stateless Prophet Processing
   - type: web
     name: prophet-web-backend
     env: python
-    buildCommand: "cd backend && pip install -r requirements.txt"
-    startCommand: "cd backend && uvicorn src.main:app --host 0.0.0.0 --port $PORT"
-    plan: starter  # Can upgrade to standard/pro for more memory
+    runtime: python-3.9
+    buildCommand: "cd backend && pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn src.main:app --host 0.0.0.0 --port $PORT --workers 1 --access-log --log-level info"
+    plan: starter  # Can upgrade to standard/pro for more memory and CPU
+    
+    # Scaling configuration for privacy-first architecture
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    
+    # Disk space (minimal since we're stateless)
+    disk:
+      name: backend-tmp
+      size: 1GB
+      mount: /tmp
+    
+    # Environment variables for privacy-first stateless architecture
     envVars:
       - key: ENVIRONMENT
         value: production
-      - key: CORS_ORIGINS
-        value: https://prophet-web-frontend.onrender.com
-      - key: MAX_SESSION_AGE_HOURS
-        value: 2
+      - key: DEBUG
+        value: false
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        fromService: true  # Render provides this automatically
+      
+      # Privacy and session settings
+      - key: MAX_SESSION_AGE
+        value: "7200"  # 2 hours in seconds
       - key: MAX_MEMORY_MB
-        value: 512
-    healthCheckPath: /api/health
+        value: "512"   # Memory limit for stateless processing
+      - key: AUTO_CLEANUP_INTERVAL
+        value: "300"   # 5 minutes cleanup interval
+      
+      # Security settings
+      - key: SECRET_KEY
+        generateValue: true  # Render generates secure random key
+      - key: ALLOWED_ORIGINS
+        value: "https://prophet-web-frontend.onrender.com"
+      
+      # File upload limits
+      - key: MAX_FILE_SIZE_MB
+        value: "50"
+      - key: MAX_CONCURRENT_UPLOADS
+        value: "5"
+      
+      # Performance settings
+      - key: WORKER_TIMEOUT
+        value: "300"  # 5 minutes for long forecasts
+      - key: MAX_CONCURRENT_FORECASTS
+        value: "3"
+      
+      # Logging (no user data)
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: LOG_FORMAT
+        value: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     
-  # Frontend Static Site
+    # Health check for automatic restarts
+    healthCheckPath: /health
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Build and deploy notifications
+    notifications:
+      - type: slack
+        webhook: $SLACK_WEBHOOK_URL  # Optional: set in dashboard
+      - type: email
+        emails:
+          - $DEPLOY_NOTIFICATION_EMAIL  # Optional: set in dashboard
+    
+  # Frontend Static Site - Privacy-First UI
   - type: static
     name: prophet-web-frontend
-    buildCommand: "cd frontend && npm install && npm run build"
+    buildCommand: "cd frontend && npm ci && npm run build"
     staticPublishPath: frontend/dist
+    
+    # Frontend environment variables
     envVars:
       - key: VITE_API_URL
-        value: https://prophet-web-backend.onrender.com
+        value: "https://prophet-web-backend.onrender.com"
       - key: VITE_ENVIRONMENT
         value: production
+      - key: VITE_APP_NAME
+        value: "Prophet Web Interface"
+      - key: VITE_PRIVACY_MODE
+        value: "strict"
+    
+    # Security headers for privacy protection
     headers:
+      # Prevent embedding in frames
       - path: /*
         name: X-Frame-Options
         value: DENY
+      
+      # Prevent MIME type sniffing
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+      
+      # Strict referrer policy
       - path: /*
         name: Referrer-Policy
         value: strict-origin-when-cross-origin
+      
+      # Content Security Policy for privacy
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://prophet-web-backend.onrender.com; font-src 'self'"
+      
+      # Prevent caching of sensitive pages
+      - path: /
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      
+      # Privacy-focused permissions policy
+      - path: /*
+        name: Permissions-Policy
+        value: "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Build and deploy notifications
+    notifications:
+      - type: slack
+        webhook: $SLACK_WEBHOOK_URL  # Optional: set in dashboard
+      - type: email
+        emails:
+          - $DEPLOY_NOTIFICATION_EMAIL  # Optional: set in dashboard
+
+# Global deployment settings
+region: oregon  # Choose region closest to your users
+branch: main    # Deploy from main branch automatically
+
+# Additional deployment configuration
+previewsEnabled: true  # Enable preview deployments for PRs
+buildFilter:
+  paths:
+    - backend/**
+    - frontend/**
+    - render.yaml
+  ignoredPaths:
+    - "*.md"
+    - ".git/**"
+    - ".kiro/**"
