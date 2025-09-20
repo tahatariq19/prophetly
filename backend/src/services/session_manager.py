@@ -264,3 +264,8 @@ class SessionManager:
 
 # Global session manager instance (without auto-start for testing)
 session_manager = SessionManager(auto_start_cleanup=False)
+
+
+def get_session_manager() -> SessionManager:
+    """Dependency injection function for FastAPI to get the global session manager."""
+    return session_manager

@@ -205,5 +205,35 @@ def cleanup_dataframe_memory(df_dict: Dict[str, Any]) -> None:
     force_garbage_collection()
 
 
+def secure_cleanup(local_vars: Dict[str, Any]) -> None:
+    """Securely clean up local variables and force garbage collection.
+    
+    This function is used to ensure privacy compliance by cleaning up
+    any sensitive data from local variables after API operations.
+    """
+    # List of variable names that might contain sensitive data
+    sensitive_vars = [
+        'forecast_data', 'components', 'session', 'data', 'df', 
+        'dataframe', 'results', 'export_data', 'report_data',
+        'package_data', 'config_data', 'metadata'
+    ]
+    
+    # Clean up sensitive variables
+    for var_name in sensitive_vars:
+        if var_name in local_vars:
+            try:
+                # If it's a DataFrame, clear it properly
+                if hasattr(local_vars[var_name], 'memory_usage'):
+                    local_vars[var_name] = None
+                # For other objects, just delete
+                del local_vars[var_name]
+            except (KeyError, AttributeError):
+                # Variable might have been cleaned up already
+                pass
+    
+    # Force garbage collection to ensure memory is freed
+    force_garbage_collection()
+
+
 # Import asyncio at the end to avoid circular imports
 import asyncio
