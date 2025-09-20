@@ -1,10 +1,19 @@
 <template>
-  <div id="app" :data-theme="theme">
+  <div id="app" :data-theme="theme" :class="{ 'mobile-layout': isMobile }">
     <!-- Skip link for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Mobile Navigation (shown on mobile) -->
+    <MobileNavigation 
+      v-if="isMobile"
+      :show-bottom-nav="showBottomNav"
+      @preferences-opened="showPreferencesModal = true"
+      @session-extended="handleSessionExtended"
+      @session-cleared="handleSessionCleared"
+    />
+    
+    <!-- Desktop Navigation (shown on desktop) -->
+    <nav v-else class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container">
         <router-link class="navbar-brand" to="/">
           Prophet Web Interface
@@ -96,53 +105,28 @@
               </small>
             </div>
             
-            <!-- Mobile Settings Dropdown -->
-            <div class="nav-item dropdown d-md-none">
-              <button 
-                class="btn btn-outline-light btn-sm dropdown-toggle me-2" 
-                type="button" 
-                id="mobileSettingsDropdown" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false"
-                title="Settings"
-              >
-                <i class="bi bi-gear"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileSettingsDropdown">
-                <li>
-                  <button class="dropdown-item" @click="toggleTheme">
-                    <i :class="theme === 'light' ? 'bi bi-moon' : 'bi bi-sun'" class="me-2"></i>
-                    {{ theme === 'light' ? 'Dark Mode' : 'Light Mode' }}
-                  </button>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <router-link class="dropdown-item" to="/privacy" @click="closeNavbarOnMobile">
-                    <i class="bi bi-shield-lock me-2"></i>
-                    Privacy Policy
-                  </router-link>
-                </li>
-                <li>
-                  <button class="dropdown-item" @click="showPreferencesModal = true">
-                    <i class="bi bi-sliders me-2"></i>
-                    Preferences
-                  </button>
-                </li>
-              </ul>
-            </div>
+            <!-- Accessibility Button -->
+            <button 
+              class="btn btn-outline-light btn-sm me-2"
+              @click="showAccessibilityModal = true"
+              title="Accessibility settings"
+            >
+              <i class="bi bi-universal-access"></i>
+              <span class="d-none d-lg-inline ms-1">Accessibility</span>
+            </button>
             
             <!-- Desktop Theme Toggle -->
             <button 
-              class="btn btn-outline-light btn-sm me-2 d-none d-md-inline-block"
+              class="btn btn-outline-light btn-sm me-2"
               @click="toggleTheme"
               :title="`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`"
             >
               <i :class="theme === 'light' ? 'bi bi-moon' : 'bi bi-sun'" class="me-1"></i>
-              {{ theme === 'light' ? 'Dark' : 'Light' }}
+              <span class="d-none d-lg-inline">{{ theme === 'light' ? 'Dark' : 'Light' }}</span>
             </button>
             
             <!-- Desktop Privacy Link -->
-            <router-link class="nav-link d-none d-md-inline-block" to="/privacy">
+            <router-link class="nav-link" to="/privacy">
               <i class="bi bi-shield-lock me-1"></i>
               <small>Privacy</small>
             </router-link>
@@ -213,7 +197,15 @@
     </div>
     
     <!-- Main Content -->
-    <main id="main-content" class="main-content" :class="{ 'content-shifted': isLoading || hasError }">
+    <main 
+      id="main-content" 
+      class="main-content" 
+      :class="{ 
+        'content-shifted': isLoading || hasError,
+        'mobile-main': isMobile,
+        'with-bottom-nav': isMobile && showBottomNav
+      }"
+    >
       <div class="container-fluid">
         <ErrorBoundary 
           v-if="!hasError || isLoading"
@@ -320,6 +312,22 @@
                 </div>
               </div>
 
+              <!-- Mobile Layout Options -->
+              <div v-if="isMobile" class="mb-3">
+                <label class="form-label">Mobile Layout</label>
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="showBottomNav"
+                    v-model="tempPreferences.showBottomNav"
+                  >
+                  <label class="form-check-label" for="showBottomNav">
+                    Show bottom navigation bar
+                  </label>
+                </div>
+              </div>
+
               <!-- Notification Settings -->
               <div class="mb-3">
                 <label class="form-label">Notifications</label>
@@ -377,6 +385,53 @@
       </div>
     </div>
     <div v-if="showPreferencesModal" class="modal-backdrop fade show"></div>
+
+    <!-- Accessibility Settings Modal -->
+    <div 
+      v-if="showAccessibilityModal" 
+      class="modal fade show d-block" 
+      tabindex="-1" 
+      role="dialog"
+      aria-labelledby="accessibilityModalLabel"
+      aria-hidden="false"
+    >
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="accessibilityModalLabel">
+              <i class="bi bi-universal-access me-2"></i>
+              Accessibility Settings
+            </h5>
+            <button 
+              type="button" 
+              class="btn-close" 
+              @click="showAccessibilityModal = false"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" v-html="accessibilitySettingsContent">
+          </div>
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              @click="showAccessibilityModal = false"
+            >
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-primary" 
+              @click="saveAccessibilitySettings"
+            >
+              <i class="bi bi-check-lg me-1"></i>
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showAccessibilityModal" class="modal-backdrop fade show"></div>
     
     <!-- Footer -->
     <footer class="footer bg-light border-top">
@@ -408,13 +463,17 @@ import { useSessionStore } from './stores/session'
 import { checkHealth } from './services/api'
 import ErrorBoundary from './components/ErrorBoundary.vue'
 import NotificationCenter from './components/NotificationCenter.vue'
+import MobileNavigation from './components/MobileNavigation.vue'
 import { notificationService } from './services/notifications'
+import { deviceDetection } from './utils/mobile'
+import { accessibilityService } from './services/accessibility'
 
 export default {
   name: 'App',
   components: {
     ErrorBoundary,
-    NotificationCenter
+    NotificationCenter,
+    MobileNavigation
   },
   setup() {
     const router = useRouter()
@@ -424,7 +483,11 @@ export default {
     
     // Local state
     const showPreferencesModal = ref(false)
+    const showAccessibilityModal = ref(false)
     const tempPreferences = ref({})
+    const isMobile = ref(deviceDetection.isMobile())
+    const showBottomNav = ref(false)
+    const accessibilitySettingsContent = ref('')
     
     // Computed properties
     const theme = computed(() => preferencesStore.theme)
@@ -502,6 +565,7 @@ export default {
         theme: preferencesStore.theme,
         defaultHorizon: preferencesStore.defaultHorizon,
         preferredMode: preferencesStore.preferredMode,
+        showBottomNav: showBottomNav.value,
         notificationSettings: { ...preferencesStore.notificationSettings }
       }
       showPreferencesModal.value = true
@@ -512,6 +576,12 @@ export default {
       preferencesStore.updateDefaultHorizon(tempPreferences.value.defaultHorizon)
       preferencesStore.updatePreferredMode(tempPreferences.value.preferredMode)
       preferencesStore.updateNotificationSettings(tempPreferences.value.notificationSettings)
+      
+      // Save mobile-specific preferences
+      if (isMobile.value) {
+        showBottomNav.value = tempPreferences.value.showBottomNav
+        localStorage.setItem('prophet-show-bottom-nav', showBottomNav.value.toString())
+      }
       
       showPreferencesModal.value = false
       
@@ -542,6 +612,46 @@ export default {
       appStore.setLoading(false)
       appStore.clearError()
       sessionStore.stopProcessing()
+    }
+
+    // Accessibility modal handling
+    const openAccessibilityModal = () => {
+      accessibilitySettingsContent.value = accessibilityService.createSettingsPanel()
+      showAccessibilityModal.value = true
+    }
+
+    const saveAccessibilitySettings = () => {
+      const form = document.querySelector('#accessibilityModal form')
+      if (form) {
+        const formData = new FormData(form)
+        accessibilityService.handleSettingsChange(formData)
+      }
+      showAccessibilityModal.value = false
+      
+      appStore.addNotification({
+        type: 'success',
+        message: 'Accessibility settings saved successfully'
+      })
+    }
+
+    // Mobile-specific handlers
+    const handleSessionExtended = () => {
+      appStore.addNotification({
+        type: 'success',
+        message: 'Session extended for 2 more hours'
+      })
+    }
+
+    const handleSessionCleared = () => {
+      appStore.addNotification({
+        type: 'info',
+        message: 'Session data cleared successfully'
+      })
+    }
+
+    // Handle viewport changes for mobile
+    const handleViewportChange = () => {
+      isMobile.value = deviceDetection.isMobile()
     }
 
     // Handle notification actions
@@ -590,6 +700,9 @@ export default {
     
     // Lifecycle
     onMounted(async () => {
+      // Initialize accessibility service
+      accessibilityService.init()
+      
       // Check API health on app start
       await checkApiHealth()
       
@@ -601,6 +714,12 @@ export default {
         sessionStore.generateSessionId()
       }
 
+      // Load mobile preferences
+      if (isMobile.value) {
+        const savedBottomNav = localStorage.getItem('prophet-show-bottom-nav')
+        showBottomNav.value = savedBottomNav === 'true'
+      }
+
       // Initialize Bootstrap components
       if (window.bootstrap) {
         // Initialize tooltips
@@ -610,13 +729,16 @@ export default {
         })
       }
 
-      // Handle responsive navigation
+      // Handle responsive navigation and mobile detection
       const handleResize = () => {
         const navbar = document.querySelector('.navbar-collapse')
         if (window.innerWidth >= 768 && navbar && navbar.classList.contains('show')) {
           const bsCollapse = new window.bootstrap.Collapse(navbar)
           bsCollapse.hide()
         }
+        
+        // Update mobile detection
+        handleViewportChange()
       }
 
       window.addEventListener('resize', handleResize)
@@ -635,7 +757,11 @@ export default {
     return {
       // State
       showPreferencesModal,
+      showAccessibilityModal,
       tempPreferences,
+      isMobile,
+      showBottomNav,
+      accessibilitySettingsContent,
       
       // Computed
       theme,
@@ -658,6 +784,11 @@ export default {
       openPreferencesModal,
       savePreferences,
       cancelPreferences,
+      openAccessibilityModal,
+      saveAccessibilitySettings,
+      handleSessionExtended,
+      handleSessionCleared,
+      handleViewportChange,
       handleComponentError,
       handleRetry,
       handleNotificationAction
@@ -838,6 +969,34 @@ export default {
 
 [data-theme="dark"] .modal-footer {
   border-top-color: var(--border-color);
+}
+
+/* Mobile Layout Styles */
+.mobile-layout {
+  padding-top: 0;
+}
+
+.mobile-layout .main-content {
+  padding-top: 70px; /* Account for mobile top bar */
+}
+
+.mobile-layout.with-bottom-nav .main-content {
+  padding-bottom: 70px; /* Account for bottom navigation */
+}
+
+.mobile-main {
+  min-height: calc(100vh - 70px);
+}
+
+.mobile-main.with-bottom-nav {
+  min-height: calc(100vh - 140px);
+}
+
+/* Hide desktop navbar on mobile */
+@media (max-width: 768px) {
+  .mobile-layout .navbar {
+    display: none;
+  }
 }
 
 /* Responsive navigation */
