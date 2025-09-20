@@ -67,7 +67,7 @@ export const fileValidation = {
         name: file.name,
         size: this.getFileSize(file),
         type: file.type,
-        lastModified: new Date(file.lastModified).toISOString()
+        lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : new Date().toISOString()
       }
     }
   }

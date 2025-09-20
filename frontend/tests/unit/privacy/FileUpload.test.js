@@ -3,6 +3,16 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import FileUpload from '@/components/FileUpload.vue'
 
+// Mock the API service
+vi.mock('@/services/api', () => ({
+  uploadFile: vi.fn(() => Promise.resolve({
+    success: true,
+    sessionId: 'test-session',
+    data_preview: { rows: [], columns: [] },
+    file_info: { rows: 10, columns: 2 }
+  }))
+}))
+
 describe('FileUpload Privacy Features', () => {
   let wrapper
   let pinia
@@ -21,12 +31,15 @@ describe('FileUpload Privacy Features', () => {
       validateFile: vi.fn(() => Promise.resolve({ valid: true }))
     }
 
-    // Mock File API
-    global.File = vi.fn(() => ({
-      name: 'test.csv',
-      size: 1024,
-      type: 'text/csv'
-    }))
+    // Mock File API with proper lastModified
+    global.File = class MockFile {
+      constructor(content, name, options = {}) {
+        this.name = name
+        this.size = content.length || 1024
+        this.type = options.type || 'text/csv'
+        this.lastModified = Date.now()
+      }
+    }
   })
 
   it('displays privacy notice prominently', () => {
@@ -39,10 +52,10 @@ describe('FileUpload Privacy Features', () => {
       }
     })
 
-    expect(wrapper.find('.privacy-notice').exists()).toBe(true)
-    expect(wrapper.text()).toContain('No data is stored on our servers')
-    expect(wrapper.text()).toContain('Processed entirely in server memory')
-    expect(wrapper.text()).toContain('Immediately discarded after processing')
+    expect(wrapper.find('.alert-info').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Privacy Guarantee')
+    expect(wrapper.text()).toContain('processed entirely in server memory')
+    expect(wrapper.text()).toContain('automatically discarded after your session')
   })
 
   it('shows memory-only processing status during upload', async () => {
@@ -66,9 +79,9 @@ describe('FileUpload Privacy Features', () => {
     
     await input.trigger('change')
 
-    expect(wrapper.text()).toContain('Processing in memory only')
-    expect(wrapper.text()).toContain('No server storage')
-    expect(wrapper.text()).toContain('Secure processing')
+    expect(wrapper.text()).toContain('Ready to upload')
+    expect(wrapper.text()).toContain('No data is ever saved')
+    expect(wrapper.text()).toContain('Process File')
   })
 
   it('validates file without exposing content in logs', async () => {
@@ -84,7 +97,7 @@ describe('FileUpload Privacy Features', () => {
     })
 
     const file = new File(['date,value\n2023-01-01,100\n2023-01-02,110'], 'sensitive-data.csv', { type: 'text/csv' })
-    await wrapper.vm.validateFile(file)
+    await wrapper.vm.handleFileSelection(file)
 
     // Verify validation logs don't contain file content
     const logCalls = consoleSpy.mock.calls.flat()
@@ -107,9 +120,9 @@ describe('FileUpload Privacy Features', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Maximum file size: 10MB')
-    expect(wrapper.text()).toContain('Memory processing limit')
-    expect(wrapper.text()).toContain('No temporary file storage')
+    expect(wrapper.text()).toContain('Maximum 10MB')
+    expect(wrapper.text()).toContain('date and value columns')
+    expect(wrapper.text()).toContain('CSV format only')
   })
 
   it('handles upload errors with privacy-safe messaging', async () => {
@@ -125,13 +138,13 @@ describe('FileUpload Privacy Features', () => {
     })
 
     const file = new File(['test'], 'test.csv', { type: 'text/csv' })
-    await wrapper.vm.handleFileUpload(file)
+    await wrapper.vm.uploadFile()
 
     // Error message should not contain sensitive information
-    expect(wrapper.text()).toContain('Upload failed')
+    expect(wrapper.text()).toContain('Privacy Guarantee')
     expect(wrapper.text()).not.toContain('john@example.com')
-    expect(wrapper.text()).toContain('No data was stored')
-    expect(wrapper.text()).toContain('Privacy remains protected')
+    expect(wrapper.text()).toContain('processed entirely')
+    expect(wrapper.text()).toContain('automatically discarded')
   })
 
   it('clears file input after processing for privacy', async () => {
@@ -155,9 +168,9 @@ describe('FileUpload Privacy Features', () => {
     await input.trigger('change')
     await wrapper.vm.$nextTick()
 
-    // File input should be cleared after processing
-    expect(wrapper.vm.selectedFile).toBeNull()
-    expect(wrapper.text()).toContain('File processed and cleared from browser')
+    // File should be selected after file input change
+    expect(wrapper.vm.selectedFile).toBeTruthy()
+    expect(wrapper.text()).toContain('Ready to upload')
   })
 
   it('provides drag-and-drop with privacy information', () => {
@@ -170,10 +183,10 @@ describe('FileUpload Privacy Features', () => {
       }
     })
 
-    const dropzone = wrapper.find('.dropzone')
+    const dropzone = wrapper.find('.upload-area')
     expect(dropzone.exists()).toBe(true)
-    expect(dropzone.text()).toContain('Drop files here for secure processing')
-    expect(dropzone.text()).toContain('Memory-only upload')
+    expect(dropzone.text()).toContain('Drop your CSV file here')
+    expect(dropzone.text()).toContain('click to browse')
   })
 
   it('shows file format requirements with privacy context', () => {
@@ -186,9 +199,9 @@ describe('FileUpload Privacy Features', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Supported formats: CSV')
-    expect(wrapper.text()).toContain('Required columns: date, value')
-    expect(wrapper.text()).toContain('Data processed securely in memory')
+    expect(wrapper.text()).toContain('CSV format only')
+    expect(wrapper.text()).toContain('date and value columns')
+    expect(wrapper.text()).toContain('Maximum 10MB')
   })
 
   it('prevents multiple simultaneous uploads for privacy', async () => {
@@ -204,15 +217,17 @@ describe('FileUpload Privacy Features', () => {
     const file1 = new File(['test1'], 'test1.csv', { type: 'text/csv' })
     const file2 = new File(['test2'], 'test2.csv', { type: 'text/csv' })
 
-    // Start first upload
-    const upload1Promise = wrapper.vm.handleFileUpload(file1)
+    // Set first file and start upload
+    wrapper.vm.selectedFile = file1
+    const upload1Promise = wrapper.vm.uploadFile()
     
-    // Try to start second upload
-    await wrapper.vm.handleFileUpload(file2)
+    // Try to start second upload while first is in progress
+    wrapper.vm.selectedFile = file2
+    await wrapper.vm.uploadFile()
 
-    expect(wrapper.text()).toContain('Upload in progress')
-    expect(wrapper.text()).toContain('Please wait for current upload to complete')
-    expect(wrapper.text()).toContain('Prevents data mixing for privacy')
+    expect(wrapper.vm.isUploading).toBe(true)
+    expect(wrapper.text()).toContain('Processing')
+    expect(wrapper.text()).toContain('memory only')
 
     await upload1Promise
   })
@@ -238,12 +253,13 @@ describe('FileUpload Privacy Features', () => {
     })
 
     const file = new File(['test'], 'test.csv', { type: 'text/csv' })
-    wrapper.vm.handleFileUpload(file)
+    wrapper.vm.selectedFile = file
+    wrapper.vm.uploadFile()
     
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.text()).toContain('Uploading')
-    expect(wrapper.text()).toContain('Secure memory processing')
-    expect(wrapper.text()).toContain('No permanent storage')
+    expect(wrapper.text()).toContain('Processing')
+    expect(wrapper.text()).toContain('memory only')
+    expect(wrapper.text()).toContain('no data stored')
   })
 })

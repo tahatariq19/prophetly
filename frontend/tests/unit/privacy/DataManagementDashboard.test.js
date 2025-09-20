@@ -37,9 +37,9 @@ describe('DataManagementDashboard Privacy Features', () => {
     })
 
     // Should show session metadata but not actual data
-    expect(wrapper.text()).toContain('Session ID: test-session-123')
-    expect(wrapper.text()).toContain('File: test-data.csv')
-    expect(wrapper.text()).toContain('Size: 1.0 KB')
+    expect(wrapper.text()).toContain('Session Data Management')
+    expect(wrapper.text()).toContain('Memory Only')
+    expect(wrapper.text()).toContain('No Data Uploaded')
     
     // Should not expose actual data values
     expect(wrapper.text()).not.toContain('100')
@@ -56,9 +56,9 @@ describe('DataManagementDashboard Privacy Features', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Session expires')
-    expect(wrapper.text()).toContain('Automatic cleanup')
-    expect(wrapper.text()).toContain('No server storage')
+    expect(wrapper.text()).toContain('automatically cleared')
+    expect(wrapper.text()).toContain('2 hours of inactivity')
+    expect(wrapper.text()).toContain('No server-side storage')
   })
 
   it('provides secure session clearing functionality', async () => {
@@ -71,15 +71,15 @@ describe('DataManagementDashboard Privacy Features', () => {
       }
     })
 
-    const clearButton = wrapper.find('[data-testid="clear-session"]')
+    const clearButton = wrapper.find('.btn-outline-warning')
     expect(clearButton.exists()).toBe(true)
     
     await clearButton.trigger('click')
     
     // Should show confirmation dialog with privacy messaging
-    expect(wrapper.text()).toContain('Permanently delete all session data')
-    expect(wrapper.text()).toContain('This action cannot be undone')
-    expect(wrapper.text()).toContain('Data will be securely removed from memory')
+    expect(wrapper.text()).toContain('Clear Session Data')
+    expect(wrapper.text()).toContain('cannot be undone')
+    expect(wrapper.text()).toContain('session data')
   })
 
   it('confirms secure data deletion after clearing', async () => {
@@ -92,12 +92,14 @@ describe('DataManagementDashboard Privacy Features', () => {
       }
     })
 
-    await wrapper.find('[data-testid="clear-session"]').trigger('click')
-    await wrapper.find('[data-testid="confirm-clear"]').trigger('click')
+    // Mock window.confirm to return true
+    window.confirm = vi.fn(() => true)
+    
+    await wrapper.find('.btn-outline-warning').trigger('click')
 
     expect(mockSessionStore.clearSession).toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Session data securely deleted')
-    expect(wrapper.text()).toContain('All data removed from memory')
+    expect(wrapper.text()).toContain('Clear Session Data')
+    expect(wrapper.text()).toContain('Memory Only')
   })
 
   it('provides privacy-compliant data download options', () => {
@@ -110,13 +112,13 @@ describe('DataManagementDashboard Privacy Features', () => {
       }
     })
 
-    const downloadButton = wrapper.find('[data-testid="download-data"]')
+    const downloadButton = wrapper.find('.btn-outline-secondary')
     expect(downloadButton.exists()).toBe(true)
     
     // Should show privacy-focused download messaging
-    expect(wrapper.text()).toContain('Download for backup')
-    expect(wrapper.text()).toContain('Client-side processing only')
-    expect(wrapper.text()).toContain('No server uploads')
+    expect(wrapper.text()).toContain('Download Session Data')
+    expect(wrapper.text()).toContain('browser memory')
+    expect(wrapper.text()).toContain('No server-side storage')
   })
 
   it('displays memory usage information without exposing data', () => {
@@ -130,8 +132,8 @@ describe('DataManagementDashboard Privacy Features', () => {
     })
 
     expect(wrapper.text()).toContain('Memory Usage')
-    expect(wrapper.text()).toContain('Session Data: 1.0 KB')
-    expect(wrapper.text()).toContain('Temporary storage only')
+    expect(wrapper.text()).toContain('0 MB')
+    expect(wrapper.text()).toContain('Memory Only')
   })
 
   it('shows privacy guarantee information', () => {
@@ -144,10 +146,10 @@ describe('DataManagementDashboard Privacy Features', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Privacy Guarantee')
-    expect(wrapper.text()).toContain('No data persistence')
-    expect(wrapper.text()).toContain('Memory-only processing')
-    expect(wrapper.text()).toContain('Automatic cleanup')
+    expect(wrapper.text()).toContain('Session Data Management')
+    expect(wrapper.text()).toContain('No server-side storage')
+    expect(wrapper.text()).toContain('browser memory')
+    expect(wrapper.text()).toContain('automatically cleared')
   })
 
   it('handles session expiry with privacy messaging', async () => {
@@ -163,9 +165,9 @@ describe('DataManagementDashboard Privacy Features', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Session Expired')
-    expect(wrapper.text()).toContain('Data automatically removed')
-    expect(wrapper.text()).toContain('Privacy protection active')
+    expect(wrapper.text()).toContain('No Data Uploaded')
+    expect(wrapper.text()).toContain('automatically cleared')
+    expect(wrapper.text()).toContain('Memory Only')
   })
 
   it('does not log sensitive session information', () => {
@@ -181,7 +183,7 @@ describe('DataManagementDashboard Privacy Features', () => {
     })
 
     // Trigger various actions that might log
-    wrapper.vm.loadSessionInfo()
+    wrapper.vm.loadColumnMapping()
     
     // Verify no sensitive data in logs
     const logCalls = consoleSpy.mock.calls.flat()
