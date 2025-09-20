@@ -12,6 +12,7 @@ export const useSessionStore = defineStore('session', () => {
   const forecastResults = ref(null)
   const processingHistory = ref([])
   const processedData = ref(null)
+  const userAnnotations = ref([])
   const processingStatus = ref({
     isProcessing: false,
     stage: null,
@@ -52,6 +53,26 @@ export const useSessionStore = defineStore('session', () => {
 
   function setForecastResults(results) {
     forecastResults.value = results
+  }
+
+  function updateUserAnnotations(annotations) {
+    userAnnotations.value = annotations
+  }
+
+  function addUserAnnotation(annotation) {
+    userAnnotations.value.push({
+      ...annotation,
+      id: Date.now(),
+      timestamp: new Date()
+    })
+  }
+
+  function removeUserAnnotation(id) {
+    userAnnotations.value = userAnnotations.value.filter(annotation => annotation.id !== id)
+  }
+
+  function getUserAnnotations() {
+    return userAnnotations.value
   }
 
   function addProcessingStep(step) {
@@ -173,6 +194,7 @@ export const useSessionStore = defineStore('session', () => {
     forecastResults.value = null
     processingHistory.value = []
     processedData.value = null
+    userAnnotations.value = []
     processingStatus.value = {
       isProcessing: false,
       stage: null,
@@ -195,7 +217,8 @@ export const useSessionStore = defineStore('session', () => {
       columnMapping: columnMapping.value,
       config: forecastConfig.value,
       results: forecastResults.value,
-      processingHistory: processingHistory.value
+      processingHistory: processingHistory.value,
+      userAnnotations: userAnnotations.value
     }
   }
 
@@ -208,6 +231,7 @@ export const useSessionStore = defineStore('session', () => {
     if (sessionData.config) forecastConfig.value = sessionData.config
     if (sessionData.results) forecastResults.value = sessionData.results
     if (sessionData.processingHistory) processingHistory.value = sessionData.processingHistory
+    if (sessionData.userAnnotations) userAnnotations.value = sessionData.userAnnotations
   }
 
   // Get session summary for UI display
@@ -260,6 +284,7 @@ export const useSessionStore = defineStore('session', () => {
     processingHistory,
     processedData,
     processingStatus,
+    userAnnotations,
     
     // Getters
     hasData,
@@ -274,6 +299,10 @@ export const useSessionStore = defineStore('session', () => {
     setColumnMapping,
     setForecastConfig,
     setForecastResults,
+    updateUserAnnotations,
+    addUserAnnotation,
+    removeUserAnnotation,
+    getUserAnnotations,
     addProcessingStep,
     removeProcessingStep,
     clearProcessingSteps,

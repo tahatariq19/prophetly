@@ -457,3 +457,115 @@ export const getPreprocessingOptions = async () => {
     throw error
   }
 }
+
+// Export API functions - Privacy-focused data export
+
+// Export forecast data in specified format
+export const exportForecastData = async (sessionId, format, options = {}) => {
+  try {
+    const response = await api.post(`/export/data/${format}`, {
+      session_id: sessionId,
+      include_metadata: options.includeMetadata !== false,
+      include_components: options.includeComponents !== false,
+      include_cross_validation: options.includeCrossValidation === true,
+      annotations: options.annotations || []
+    }, {
+      headers: {
+        'X-Export-Mode': 'memory-only',
+        'X-Privacy-Safe': 'true'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'No forecast results found for export.'
+    } else if (error.response?.status === 400) {
+      error.message = `Unsupported export format: ${format}`
+    }
+    throw error
+  }
+}
+
+// Export model configuration
+export const exportConfiguration = async (sessionId, includeMetadata = true) => {
+  try {
+    const response = await api.post('/export/configuration', {
+      session_id: sessionId,
+      include_metadata: includeMetadata
+    }, {
+      headers: {
+        'X-Export-Mode': 'memory-only',
+        'X-Privacy-Safe': 'true'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'No configuration found for export.'
+    }
+    throw error
+  }
+}
+
+// Generate comprehensive report
+export const generateReport = async (sessionId, format, options = {}) => {
+  try {
+    const response = await api.post(`/export/report/${format}`, {
+      session_id: sessionId,
+      title: options.title || 'Prophet Forecast Report',
+      comments: options.comments || null,
+      include_summary: options.includeSummary !== false,
+      include_configuration: options.includeConfiguration !== false,
+      include_metrics: options.includeMetrics !== false,
+      include_components: options.includeComponents !== false,
+      include_charts: options.includeCharts === true
+    }, {
+      headers: {
+        'X-Export-Mode': 'memory-only',
+        'X-Privacy-Safe': 'true'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'Session not found for report generation.'
+    } else if (error.response?.status === 400) {
+      error.message = `Unsupported report format: ${format}`
+    }
+    throw error
+  }
+}
+
+// Export complete package
+export const exportCompletePackage = async (sessionId, options = {}) => {
+  try {
+    const response = await api.post('/export/complete-package', {
+      session_id: sessionId,
+      include_metadata: options.includeMetadata !== false,
+      include_components: options.includeComponents !== false,
+      include_cross_validation: options.includeCrossValidation === true,
+      annotations: options.annotations || []
+    }, {
+      headers: {
+        'X-Export-Mode': 'memory-only',
+        'X-Privacy-Safe': 'true'
+      }
+    })
+    return response.data
+  } catch (error) {
+    if (error.response?.status === 404) {
+      error.message = 'Session not found for package export.'
+    }
+    throw error
+  }
+}
+
+// Get supported export formats
+export const getSupportedFormats = async () => {
+  try {
+    const response = await api.get('/export/formats')
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}

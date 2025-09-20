@@ -148,27 +148,10 @@
             <i class="bi bi-graph-up me-2"></i>
             View Charts
           </button>
-          <div class="btn-group">
-            <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="bi bi-download me-2"></i>
-              Download
-            </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" @click="downloadResults('json')">
-                <i class="bi bi-filetype-json me-2"></i>JSON Results
-              </a></li>
-              <li><a class="dropdown-item" href="#" @click="downloadResults('csv')">
-                <i class="bi bi-filetype-csv me-2"></i>CSV Data
-              </a></li>
-              <li><a class="dropdown-item" href="#" @click="downloadResults('config')">
-                <i class="bi bi-gear me-2"></i>Configuration
-              </a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#" @click="downloadResults('complete')">
-                <i class="bi bi-archive me-2"></i>Complete Package
-              </a></li>
-            </ul>
-          </div>
+          <button class="btn btn-outline-success" @click="showExportManager = true">
+            <i class="bi bi-download me-2"></i>
+            Export Results
+          </button>
           <button class="btn btn-outline-info" @click="shareResults">
             <i class="bi bi-share me-2"></i>
             Share
@@ -308,8 +291,26 @@
       </div>
     </div>
 
+    <!-- Export Manager Modal -->
+    <div class="modal fade" :class="{ show: showExportManager }" :style="{ display: showExportManager ? 'block' : 'none' }" v-if="showExportManager">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Export Results</h5>
+            <button type="button" class="btn-close" @click="showExportManager = false"></button>
+          </div>
+          <div class="modal-body p-0">
+            <ExportManager 
+              @export-completed="handleExportCompleted"
+              @export-error="handleExportError"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal Backdrop -->
-    <div class="modal-backdrop fade show" v-if="showClearConfirmation || showUploadModal" @click="closeModals"></div>
+    <div class="modal-backdrop fade show" v-if="showClearConfirmation || showUploadModal || showExportManager" @click="closeModals"></div>
   </div>
 </template>
 
@@ -317,9 +318,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '../stores/session'
+import ExportManager from './ExportManager.vue'
 
 export default {
   name: 'SessionResultManager',
+  components: {
+    ExportManager
+  },
   emits: ['session-cleared', 'session-restored', 'session-extended'],
   setup(_, { emit }) {
     const router = useRouter()
@@ -328,6 +333,7 @@ export default {
     // Reactive state
     const showClearConfirmation = ref(false)
     const showUploadModal = ref(false)
+    const showExportManager = ref(false)
     const sessionFileInput = ref(null)
     const sessionStartTime = ref(Date.now())
     const currentTime = ref(Date.now())
@@ -548,9 +554,20 @@ export default {
       router.push('/upload')
     }
     
+    const handleExportCompleted = (exportInfo) => {
+      console.log('Export completed:', exportInfo)
+      // Optionally show success notification
+    }
+    
+    const handleExportError = (error) => {
+      console.error('Export error:', error)
+      alert(`Export failed: ${error.error}`)
+    }
+    
     const closeModals = () => {
       showClearConfirmation.value = false
       showUploadModal.value = false
+      showExportManager.value = false
     }
     
     // Lifecycle
@@ -577,6 +594,7 @@ export default {
       // State
       showClearConfirmation,
       showUploadModal,
+      showExportManager,
       sessionFileInput,
       maxSessionAge,
       
@@ -604,6 +622,8 @@ export default {
       handleSessionFileUpload,
       downloadBeforeClear,
       clearSession,
+      handleExportCompleted,
+      handleExportError,
       closeModals
     }
   }
