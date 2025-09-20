@@ -108,6 +108,19 @@ docker-compose -f docker-compose.prod.yml up --build
 
 ## Documentation
 
+### 📚 Comprehensive Documentation Package
+
+**[Complete Documentation Overview](./DOCUMENTATION_README.md)** - Start here for role-based navigation
+
+#### User Documentation
+- **[User Manual](./USER_MANUAL.md)**: Complete guide for end users and business analysts
+- **[Privacy Policy](./PRIVACY_POLICY.md)**: Privacy commitments and legal documentation
+
+#### Technical Documentation  
+- **[API Documentation](./API_DOCUMENTATION.md)**: Stateless API reference for developers
+- **[Data Handling Guide](./DATA_HANDLING.md)**: Technical deep-dive into privacy-first architecture
+
+#### Deployment Documentation
 - **[Deployment Guide](./RENDER_DEPLOYMENT.md)**: Complete Render deployment instructions
 - **[Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)**: Step-by-step deployment validation
 - **[Development Guide](./DEVELOPMENT.md)**: Local development setup and guidelines
