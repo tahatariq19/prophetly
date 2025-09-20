@@ -14,6 +14,35 @@ global.IntersectionObserver = vi.fn(() => ({
   disconnect: vi.fn(),
 }))
 
+// Mock window.matchMedia
+global.matchMedia = vi.fn((query) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(), // deprecated
+  removeListener: vi.fn(), // deprecated
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+}))
+
+// Mock navigator.vibrate
+global.navigator.vibrate = vi.fn()
+
+// Mock Bootstrap
+global.bootstrap = {
+  Collapse: vi.fn().mockImplementation(() => ({
+    hide: vi.fn(),
+    show: vi.fn(),
+    toggle: vi.fn()
+  })),
+  Tooltip: vi.fn().mockImplementation(() => ({
+    dispose: vi.fn(),
+    show: vi.fn(),
+    hide: vi.fn()
+  }))
+}
+
 // Mock Chart.js
 vi.mock('chart.js', () => ({
   Chart: vi.fn(() => ({
@@ -52,7 +81,7 @@ config.global.stubs = {
   }
 }
 
-// Mock localStorage
+// Mock localStorage with spies
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
@@ -61,7 +90,7 @@ const localStorageMock = {
 }
 global.localStorage = localStorageMock
 
-// Mock sessionStorage
+// Mock sessionStorage with spies
 const sessionStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
@@ -75,3 +104,18 @@ Object.defineProperty(document, 'cookie', {
   writable: true,
   value: ''
 })
+
+// Mock URL.createObjectURL and revokeObjectURL
+global.URL.createObjectURL = vi.fn(() => 'mock-url')
+global.URL.revokeObjectURL = vi.fn()
+
+// Mock the accessibility composable
+vi.mock('@/composables/useAccessibility', () => ({
+  useAccessibility: () => ({
+    isHighContrast: { value: false },
+    isReducedMotion: { value: false },
+    announceToScreenReader: vi.fn(),
+    focusElement: vi.fn(),
+    detectSystemPreferences: vi.fn()
+  })
+}))
