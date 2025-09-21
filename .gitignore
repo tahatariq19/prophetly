@@ -20,6 +20,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.ruff_cache/
 MANIFEST
 
 # Virtual environments
@@ -212,6 +213,7 @@ secrets.json
 # IDE and Editor files
 .vscode/
 .idea/
+.kiro/
 *.swp
 *.swo
 *~
