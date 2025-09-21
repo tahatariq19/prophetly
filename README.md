@@ -1,24 +1,24 @@
 # Prophet Web Interface
 
-A privacy-first, full-stack web application for Facebook Prophet time series forecasting. All data processing happens in memory with no persistent storage.
+A full-stack web application for Facebook Prophet time series forecasting. All data processing happens in memory with no persistent storage.
 
 ## Features
 
-- **Privacy-First**: Zero server-side data storage.
-- **Stateless Architecture**: All processing in memory, with no user data stored on the server.
+- **Memory-Based Processing**: All data processing happens in RAM only.
+- **Session Management**: Temporary sessions for data isolation during processing.
 - **User-Friendly**: Simple interface for business users to upload data and generate forecasts.
 - **Advanced Options**: Full Prophet parameter control for data scientists.
 - **Cross-Platform**: Responsive web interface for desktop and mobile.
 
-## Privacy Commitment
+## Architecture
 
-This application is built on a foundation of privacy-by-design.
+This application is built with a memory-first design approach.
 
 - All data processing happens in server memory (volatile RAM) only.
 - No persistent storage (databases, file systems) or caching is used for user data.
-- Memory is automatically and securely cleared after each request is processed.
+- Memory is automatically cleared when sessions expire.
 - User preferences are stored only in the browser's local storage.
-- No user data is ever written to server logs.
+- No user data is written to server logs.
 
 ## Architecture
 
@@ -107,7 +107,6 @@ The `render.yaml` file handles all the necessary environment variables and build
 ## Documentation
 
 - **[API Documentation](./API_DOCUMENTATION.md)**: A complete technical reference for all API endpoints, perfect for developers building integrations.
-- **[Privacy Policy](./PRIVACY_POLICY.md)**: A detailed look at the privacy commitments and legal documentation.
 
 ## License
 

@@ -1,22 +1,22 @@
-rations happen in volatile memory during the request lifecycle and are immediately discarded upon completion.
+All operations happen in volatile memory during the request lifecycle and are automatically cleaned up upon completion.
 
 ## Core Architectural Principles
 
-### 🔒 Privacy-First Design
+### 💾 Memory-Based Design
 
 - **No Persistent Storage**: Zero databases, file systems, or caches for user data
 - **Memory-Only Processing**: All data exists solely in RAM during request processing
-- **Automatic Cleanup**: Explicit memory clearing after each operation
+- **Automatic Cleanup**: Memory is cleared after each operation
 - **Session Isolation**: Complete separation between concurrent user sessions
-- **Secure Disposal**: Cryptographic-grade memory clearing for sensitive data
+- **Resource Management**: Memory usage monitoring and limits
 
-### ⚡ Stateless Operations
+### ⚡ Session-Based Operations
 
-- **Request-Response Cycle**: Each API call is completely independent
-- **No Server-Side State**: No session storage, cookies, or persistent connections
+- **Request-Response Cycle**: Each API call is processed within a session context
+- **Session Management**: Temporary sessions for data isolation during processing
 - **Idempotent Operations**: Same input always produces same output
-- **Horizontal Scalability**: Stateless design enables easy scaling
-- **Fault Tolerance**: No data loss risk since nothing is stored
+- **Horizontal Scalability**: Session-based design enables scaling
+- **Fault Tolerance**: Automatic cleanup prevents data accumulation
 
 ## API Endpoints
 
@@ -27,7 +27,7 @@ Development: http://localhost:8000
 ```
 
 ### Authentication
-No authentication required - the stateless design eliminates the need for user accounts or API keys.
+No authentication required - the session-based design manages data isolation without user accounts.
 
 ---
 
@@ -36,7 +36,7 @@ No authentication required - the stateless design eliminates the need for user a
 ### POST /api/upload
 Upload and process CSV data entirely in memory.
 
-**Privacy Features:**
+**Memory Management:**
 - File processed directly from request stream
 - No temporary files created on disk
 - Data validated and parsed in RAM only
@@ -80,7 +80,7 @@ Content-Type: multipart/form-data
 }
 ```
 
-**Memory Management:**
+**Session Management:**
 - Session data expires automatically after 2 hours
 - Explicit cleanup on session termination
 - Memory usage monitoring and limits
@@ -93,7 +93,7 @@ Content-Type: multipart/form-data
 ### POST /api/process
 Apply data cleaning and transformations in memory.
 
-**Stateless Processing:**
+**Memory-Based Processing:**
 - No intermediate files or caches
 - All transformations applied to in-memory data
 - Original data discarded after transformation
@@ -143,7 +143,7 @@ Content-Type: application/json
 ### POST /api/forecast
 Generate Prophet forecasts with complete memory isolation.
 
-**Privacy-Safe Forecasting:**
+**Memory-Based Forecasting:**
 - Prophet model created and trained in memory only
 - No model persistence or caching
 - Forecast results generated in RAM
@@ -225,7 +225,7 @@ GET /api/forecast/status/{task_id}
 ### POST /api/validate
 Perform cross-validation with memory-only operations.
 
-**Stateless Validation:**
+**Memory-Based Validation:**
 - Multiple model training iterations in memory
 - No validation result caching
 - Performance metrics calculated on-demand
@@ -274,7 +274,7 @@ Content-Type: application/json
 ### GET /api/export/{format}
 Export results in various formats with immediate generation.
 
-**Privacy-Safe Export:**
+**Memory-Based Export:**
 - Files generated in memory and streamed directly
 - No temporary files on server
 - Immediate cleanup after download
@@ -296,7 +296,7 @@ GET /api/export/json?session_id=temp-session-uuid&type=full_report
 ## System Health and Monitoring
 
 ### GET /api/health
-System health check with privacy compliance status.
+System health check with operational status.
 
 ```http
 GET /api/health
@@ -307,12 +307,7 @@ GET /api/health
 {
   "status": "healthy",
   "version": "1.0.0",
-  "privacy_compliance": {
-    "data_persistence": false,
-    "memory_only": true,
-    "auto_cleanup": true,
-    "session_isolation": true
-  },
+  "environment": "production",
   "system_metrics": {
     "memory_usage": "2.1GB",
     "active_sessions": 15,
@@ -334,8 +329,7 @@ GET /api/metrics
   "requests_per_minute": 45,
   "average_response_time": "1.2s",
   "memory_efficiency": "94%",
-  "session_cleanup_rate": "100%",
-  "privacy_violations": 0
+  "session_cleanup_rate": "100%"
 }
 ```
 
@@ -344,7 +338,7 @@ GET /api/metrics
 ## Error Handling
 
 ### Error Response Format
-All errors follow a consistent format with privacy-safe messages.
+All errors follow a consistent format with clear error messages.
 
 ```json
 {
@@ -360,13 +354,13 @@ All errors follow a consistent format with privacy-safe messages.
 
 ### Common Error Codes
 
-| Code | Description | Privacy Impact |
-|------|-------------|----------------|
-| `VALIDATION_ERROR` | Data validation failed | No user data in logs |
+| Code | Description | Notes |
+|------|-------------|-------|
+| `VALIDATION_ERROR` | Data validation failed | Input format issues |
 | `MEMORY_LIMIT` | Session memory exceeded | Automatic cleanup triggered |
-| `SESSION_EXPIRED` | Session timeout reached | Data already purged |
+| `SESSION_EXPIRED` | Session timeout reached | Data already cleaned up |
 | `PROPHET_ERROR` | Prophet model error | Model-specific error only |
-| `PROCESSING_ERROR` | General processing error | No data details logged |
+| `PROCESSING_ERROR` | General processing error | Check input data |
 
 ---
 
@@ -378,7 +372,7 @@ All errors follow a consistent format with privacy-safe messages.
 - **Export**: 50 downloads per hour per IP
 
 ### Security Headers
-All responses include privacy-focused security headers:
+All responses include standard security headers:
 
 ```http
 X-Content-Type-Options: nosniff
@@ -386,7 +380,6 @@ X-Frame-Options: DENY
 X-XSS-Protection: 1; mode=block
 Strict-Transport-Security: max-age=31536000
 Content-Security-Policy: default-src 'self'
-X-Privacy-Policy: no-data-storage
 ```
 
 ---
@@ -398,9 +391,9 @@ X-Privacy-Policy: no-data-storage
 1. **Creation**: Temporary session ID generated
 2. **Processing**: Data stored in isolated memory space
 3. **Expiration**: Automatic cleanup after 2 hours or on completion
-4. **Cleanup**: Explicit memory clearing and garbage collection
+4. **Cleanup**: Memory clearing and garbage collection
 
-### Memory Safety Features
+### Memory Management Features
 
 ```python
 # Example memory management (implementation detail)
@@ -425,7 +418,7 @@ class MemoryManager:
 ### Resource Monitoring
 
 - **Memory Usage**: Continuous monitoring per session
-- **Cleanup Verification**: Automated verification of data disposal
+- **Cleanup Verification**: Automated verification of memory cleanup
 - **Leak Detection**: Regular checks for memory leaks
 - **Performance Metrics**: Response time and resource usage tracking
 
@@ -522,94 +515,43 @@ class ProphetAPIClient:
 
 ---
 
-## Privacy Compliance Verification
-
-### Automated Privacy Checks
-
-The API includes built-in privacy compliance verification:
-
-```http
-GET /api/privacy/verify
-```
-
-**Response:**
-```json
-{
-  "compliance_status": "FULLY_COMPLIANT",
-  "checks": {
-    "no_data_persistence": true,
-    "memory_only_processing": true,
-    "automatic_cleanup": true,
-    "session_isolation": true,
-    "secure_disposal": true,
-    "no_user_data_logging": true
-  },
-  "last_verification": "2024-01-01T10:00:00Z"
-}
-```
-
-### Privacy Audit Trail
-
-```http
-GET /api/privacy/audit
-```
-
-**Response:**
-```json
-{
-  "audit_summary": {
-    "total_sessions": 1000,
-    "successful_cleanups": 1000,
-    "cleanup_failures": 0,
-    "average_session_duration": "45 minutes",
-    "memory_leaks_detected": 0
-  },
-  "compliance_score": "100%"
-}
-```
-
----
 
 ## Development and Testing
 
 ### Local Development Setup
 
 ```bash
-# Start the stateless API server
+# Start the API server
 cd backend
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# Verify privacy compliance
-curl http://localhost:8000/api/privacy/verify
 ```
 
-### Testing Privacy Features
+### Testing Memory Management
 
 ```python
-# Example privacy test
-def test_no_data_persistence():
-    """Verify no data persists after session cleanup"""
+# Example memory management test
+def test_session_cleanup():
+    """Verify session data is cleaned up properly"""
     client = TestClient(app)
-    
+
     # Upload data
     response = client.post("/api/upload", files={"file": test_csv})
     session_id = response.json()["session_id"]
-    
+
     # Verify data exists during session
     assert session_id in memory_manager.sessions
-    
+
     # Trigger cleanup
     memory_manager.cleanup_session(session_id)
-    
-    # Verify complete data removal
+
+    # Verify session is cleaned up
     assert session_id not in memory_manager.sessions
-    assert memory_manager.get_session_data(session_id) is None
 ```
 
 ---
 
 ## Conclusion
 
-This API is designed from the ground up with privacy as the core architectural principle. Every endpoint, every operation, and every data structure is built to ensure that user data never persists beyond the immediate processing needs. The stateless design not only provides unparalleled privacy protection but also enables horizontal scaling and fault tolerance.
+This API is designed with memory-based processing as the core architectural principle. Every endpoint, every operation, and every data structure is built to ensure that data processing happens entirely in memory without persistent storage. The session-based design enables horizontal scaling and fault tolerance while maintaining data isolation.
 
-For questions about the API or privacy features, please refer to the Privacy Policy and User Manual documentation.
+For questions about the API, please refer to the API Documentation.
