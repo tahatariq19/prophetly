@@ -4,43 +4,73 @@ A privacy-first, full-stack web application for Facebook Prophet time series for
 
 ## Features
 
-- **Privacy-First**: Zero server-side data storage
-- **Stateless Architecture**: All processing in memory
-- **User-Friendly**: Accessible interface for business users
-- **Advanced Options**: Full Prophet parameter control for data scientists
-- **Cross-Platform**: Responsive web interface
+- **Privacy-First**: Zero server-side data storage.
+- **Stateless Architecture**: All processing in memory, with no user data stored on the server.
+- **User-Friendly**: Simple interface for business users to upload data and generate forecasts.
+- **Advanced Options**: Full Prophet parameter control for data scientists.
+- **Cross-Platform**: Responsive web interface for desktop and mobile.
 
-## Quick Start
+## Privacy Commitment
 
-### Development Setup
+This application is built on a foundation of privacy-by-design.
+
+- All data processing happens in server memory (volatile RAM) only.
+- No persistent storage (databases, file systems) or caching is used for user data.
+- Memory is automatically and securely cleared after each request is processed.
+- User preferences are stored only in the browser's local storage.
+- No user data is ever written to server logs.
+
+## Architecture
+
+- **Frontend**: Vue.js single-page application.
+- **Backend**: Python FastAPI service with stateless, in-memory processing.
+- **Deployment**: Configured for easy deployment on the Render platform.
+
+## Local Development
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.9+ (for non-Docker setup)
+- Node.js 18+ (for non-Docker setup)
+
+### Quick Start with Docker (Recommended)
+
+This is the easiest way to get the full application stack running.
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd prophet-web-interface
-   ```
+
+    ```bash
+    git clone <repository-url>
+    cd prophet-web-interface
+    ```
 
 2. **Start with Docker Compose**
-   ```bash
-   docker-compose up --build
-   ```
+
+    ```bash
+    docker-compose up --build
+    ```
 
 3. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
+    - **Frontend**: [http://localhost:3000](http://localhost:3000)
+    - **Backend API**: [http://localhost:8000](http://localhost:8000)
+    - **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Manual Setup
+### Manual Setup (without Docker)
 
-#### Backend Setup
+#### Backend (FastAPI)
+
 ```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
+# Activate the virtual environment (use source venv/bin/activate on Mac/Linux)
+venv\Scripts\activate
+pip install -r requirements-dev.txt
 uvicorn src.main:app --reload
 ```
 
-#### Frontend Setup
+#### Frontend (Vue.js)
+
 ```bash
 cd frontend
 npm install
@@ -49,82 +79,36 @@ npm run dev
 
 ## Testing
 
+You can run tests using Docker or manually for each part of the application.
+
 ```bash
-# Run all tests
+# Run all tests via Docker (recommended)
 docker-compose -f docker-compose.test.yml up --abort-on-container-exit
 
-# Backend tests only
+# Run backend tests only
 cd backend
-pytest tests/ -v --cov=src
+pytest
 
-# Frontend tests only
+# Run frontend tests only
 cd frontend
 npm test
-npm run test:e2e
 ```
-
-## Privacy Commitment
-
-- All data processing happens in server memory only
-- No persistent storage or caching
-- Automatic memory cleanup after each request
-- User preferences stored only in browser cookies/localStorage
-- No user data in server logs
-
-## Architecture
-
-- **Frontend**: Vue.js single-page application
-- **Backend**: FastAPI with stateless processing
-- **Processing**: In-memory Prophet forecasting
-- **Deployment**: Render platform ready
 
 ## Deployment
 
-### Render Platform (Recommended)
+This project is configured for seamless deployment to the [Render](https://render.com) platform using the [`render.yaml`](render.yaml:0) file.
 
-The application is configured for automatic deployment on Render:
+1. **Connect Your Repository to Render**: In the Render dashboard, create a new "Blueprint" and select your repository.
+2. **Deploy**: Render will automatically detect [`render.yaml`](render.yaml:0) and provision the frontend and backend services.
+3. **Automatic Updates**: By default, Render will automatically redeploy your application whenever you push changes to your main branch.
 
-1. **Connect Repository**: Link your GitHub repository to Render
-2. **Blueprint Deployment**: Render automatically detects `render.yaml`
-3. **Automatic Scaling**: Built-in scaling and health monitoring
-4. **Privacy Compliance**: Stateless architecture with automatic cleanup
-
-```bash
-# Test deployment configuration
-python scripts/test_deployment_config.py
-
-# Validate deployed services
-python scripts/validate_render_deployment.py
-```
-
-See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for detailed deployment instructions.
-
-### Local Production Testing
-
-```bash
-# Test production build locally
-docker-compose -f docker-compose.prod.yml up --build
-```
+The `render.yaml` file handles all the necessary environment variables and build commands for a production environment.
 
 ## Documentation
 
-### 📚 Comprehensive Documentation Package
-
-**[Complete Documentation Overview](./DOCUMENTATION_README.md)** - Start here for role-based navigation
-
-#### User Documentation
-- **[User Manual](./USER_MANUAL.md)**: Complete guide for end users and business analysts
-- **[Privacy Policy](./PRIVACY_POLICY.md)**: Privacy commitments and legal documentation
-
-#### Technical Documentation  
-- **[API Documentation](./API_DOCUMENTATION.md)**: Stateless API reference for developers
-- **[Data Handling Guide](./DATA_HANDLING.md)**: Technical deep-dive into privacy-first architecture
-
-#### Deployment Documentation
-- **[Deployment Guide](./RENDER_DEPLOYMENT.md)**: Complete Render deployment instructions
-- **[Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)**: Step-by-step deployment validation
-- **[Development Guide](./DEVELOPMENT.md)**: Local development setup and guidelines
+- **[API Documentation](./API_DOCUMENTATION.md)**: A complete technical reference for all API endpoints, perfect for developers building integrations.
+- **[Privacy Policy](./PRIVACY_POLICY.md)**: A detailed look at the privacy commitments and legal documentation.
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License - see LICENSE file for details.
