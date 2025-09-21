@@ -4,6 +4,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .api.cross_validation import router as cross_validation_router
 from .api.export import router as export_router
@@ -67,6 +68,8 @@ app.include_router(cross_validation_router)
 app.include_router(model_comparison_router)
 app.include_router(export_router)
 
+# Serve static files for the frontend
+app.mount("/", StaticFiles(directory="src/static", html=True), name="static")
 
 @app.get("/")
 async def root():
