@@ -28,8 +28,12 @@ def validate_render_yaml():
         "Referrer-Policy",
     ]
 
-    headers = render_config.get("headers", [])
-    found_headers = {header.get("key"): header.get("value") for header in headers}
+    # Look for headers in services (both backend and frontend)
+    found_headers = {}
+    for service in render_config.get("services", []):
+        service_headers = service.get("headers", [])
+        for header in service_headers:
+            found_headers[header.get("key")] = header.get("value")
 
     for header in required_headers:
         if header not in found_headers:
