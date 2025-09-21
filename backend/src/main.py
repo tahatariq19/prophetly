@@ -14,26 +14,24 @@ from .api.prophet_config import router as prophet_config_router
 from .api.session import router as session_router
 from .api.upload import router as upload_router
 from .config import settings
-from .services.session_manager import session_manager
-from .utils.memory import get_memory_usage
-from .utils.error_handler import create_http_exception_handler, create_general_exception_handler
 from .middleware.error_middleware import (
-    PrivacyErrorMiddleware,
-    RequestValidationMiddleware,
+    MemoryMonitoringMiddleware,
     RateLimitMiddleware,
-    MemoryMonitoringMiddleware
+    RequestValidationMiddleware,
 )
+from .services.session_manager import session_manager
+from .utils.error_handler import create_general_exception_handler, create_http_exception_handler
+from .utils.memory import get_memory_usage
 
 app = FastAPI(
     title="Prophet Web Interface API",
-    description="Privacy-first time series forecasting API",
+    description="Time series forecasting API",
     version="1.0.0",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
 )
 
-# Add privacy-focused error handling middleware (order matters)
-app.add_middleware(PrivacyErrorMiddleware, enable_request_logging=True)
+# Add error handling middleware (order matters)
 app.add_middleware(RequestValidationMiddleware, max_request_size=10 * 1024 * 1024)  # 10MB
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(MemoryMonitoringMiddleware, max_memory_mb=512)
@@ -41,7 +39,9 @@ app.add_middleware(MemoryMonitoringMiddleware, max_memory_mb=512)
 # Security middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.render.com", "testserver"] if settings.DEBUG else ["*.render.com"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.render.com", "testserver"]
+    if settings.DEBUG
+    else ["*.render.com"],
 )
 
 # CORS middleware for frontend communication
@@ -71,9 +71,9 @@ app.include_router(export_router)
 @app.get("/")
 async def root():
     return {
-        "message": "Prophet Web Interface API - Privacy First",
+        "message": "Prophet Web Interface API",
         "version": "1.0.0",
-        "privacy": "All data processing happens in memory only"
+        "architecture": "Memory-based processing",
     }
 
 
@@ -84,10 +84,9 @@ async def health_check():
 
     return {
         "status": "healthy",
-        "privacy": "stateless",
         "environment": settings.ENVIRONMENT,
         "memory_limit_mb": settings.MAX_MEMORY_MB,
         "current_memory_mb": memory_usage["rss_mb"],
         "active_sessions": session_stats.active_sessions,
-        "total_sessions": session_stats.total_sessions
+        "total_sessions": session_stats.total_sessions,
     }

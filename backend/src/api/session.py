@@ -50,7 +50,7 @@ async def create_session():
         return SessionCreateResponse(
             session_id=session_id,
             expires_at=session.expires_at.isoformat(),
-            message="Session created successfully"
+            message="Session created successfully",
         )
 
 
@@ -64,15 +64,12 @@ async def get_session_stats():
         return {
             "session_stats": stats.model_dump(),
             "memory_usage": memory_usage,
-            "privacy_notice": "All data is stored in memory only and automatically cleaned up"
+            "privacy_notice": "All data is stored in memory only and automatically cleaned up",
         }
 
 
 @router.post("/{session_id}/data", response_model=SessionDataResponse)
-async def store_session_data(
-    session_id: str,
-    request: SessionDataRequest
-):
+async def store_session_data(session_id: str, request: SessionDataRequest):
     """Store data in a session."""
     with MemoryTracker("store_session_data"):
         session = session_manager.get_session(session_id)
@@ -82,11 +79,10 @@ async def store_session_data(
         try:
             session.store_data(request.key, request.value)
             return SessionDataResponse(
-                success=True,
-                message=f"Data stored successfully for key '{request.key}'"
+                success=True, message=f"Data stored successfully for key '{request.key}'"
             )
-        except Exception as e:
-            logger.error(f"Error storing session data: {e}")
+        except Exception:
+            logger.error("Error storing session data. See details in next log entry if available.")
             raise HTTPException(status_code=500, detail="Failed to store data")
 
 
@@ -103,9 +99,7 @@ async def get_session_data(session_id: str, key: str):
             raise HTTPException(status_code=404, detail=f"Data not found for key '{key}'")
 
         return SessionDataResponse(
-            success=True,
-            message=f"Data retrieved successfully for key '{key}'",
-            data=data
+            success=True, message=f"Data retrieved successfully for key '{key}'", data=data
         )
 
 
@@ -122,8 +116,7 @@ async def delete_session_data(session_id: str, key: str):
             raise HTTPException(status_code=404, detail=f"Data not found for key '{key}'")
 
         return SessionDataResponse(
-            success=True,
-            message=f"Data deleted successfully for key '{key}'"
+            success=True, message=f"Data deleted successfully for key '{key}'"
         )
 
 
@@ -135,10 +128,7 @@ async def extend_session(session_id: str, hours: int = 2):
         if not success:
             raise HTTPException(status_code=404, detail="Session not found or expired")
 
-        return SessionDataResponse(
-            success=True,
-            message=f"Session extended by {hours} hours"
-        )
+        return SessionDataResponse(success=True, message=f"Session extended by {hours} hours")
 
 
 @router.delete("/{session_id}", response_model=SessionDataResponse)
@@ -149,10 +139,7 @@ async def cleanup_session(session_id: str):
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
 
-        return SessionDataResponse(
-            success=True,
-            message="Session cleaned up successfully"
-        )
+        return SessionDataResponse(success=True, message="Session cleaned up successfully")
 
 
 @router.get("/{session_id}/info")
@@ -172,5 +159,5 @@ async def get_session_info(session_id: str):
             "last_accessed": session.last_accessed.isoformat(),
             "is_expired": session.is_expired(),
             "memory_usage": memory_usage,
-            "privacy_notice": "This session data exists only in memory and will be automatically cleaned up"
+            "privacy_notice": "This session data exists only in memory and will be automatically cleaned up",
         }

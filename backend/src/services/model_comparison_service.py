@@ -3,8 +3,7 @@
 import gc
 import logging
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import numpy as np
@@ -17,7 +16,7 @@ from ..models.model_comparison import (
     ModelResult,
     ParameterComparison,
     PerformanceComparison,
-    SessionModelStorage
+    SessionModelStorage,
 )
 from ..models.prophet_config import ForecastConfig
 from ..utils.memory import MemoryTracker
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class ModelComparisonService:
     """Service for comparing Prophet models within a session.
-    
+
     Features:
     - Parameter comparison between models
     - Performance metrics comparison
@@ -41,8 +40,8 @@ class ModelComparisonService:
         self.logger = logging.getLogger(__name__)
 
     def store_model_result(
-        self, 
-        session_id: str, 
+        self,
+        session_id: str,
         model_id: Optional[str] = None,
         name: Optional[str] = None,
         config: Optional[ForecastConfig] = None,
@@ -51,10 +50,10 @@ class ModelComparisonService:
         cv_metrics: Optional[Any] = None,
         training_metrics: Optional[Dict[str, float]] = None,
         processing_time_seconds: Optional[float] = None,
-        data_points: Optional[int] = None
+        data_points: Optional[int] = None,
     ) -> str:
         """Store a model result in session for comparison.
-        
+
         Args:
             session_id: Session identifier
             model_id: Optional model ID (generated if not provided)
@@ -66,7 +65,7 @@ class ModelComparisonService:
             training_metrics: Training performance metrics
             processing_time_seconds: Processing time
             data_points: Number of training data points
-            
+
         Returns:
             Model ID for the stored model
         """
@@ -96,7 +95,7 @@ class ModelComparisonService:
                     cv_metrics=cv_metrics,
                     training_metrics=training_metrics,
                     processing_time_seconds=processing_time_seconds,
-                    data_points=data_points
+                    data_points=data_points,
                 )
 
                 # Get or create session storage
@@ -109,16 +108,18 @@ class ModelComparisonService:
                 self.logger.info(f"Stored model result {model_id} in session {session_id}")
                 return model_id
 
-            except Exception as e:
-                self.logger.error(f"Failed to store model result: {e}")
+            except Exception:
+                self.logger.error(
+                    "Failed to store model result. See details in next log entry if available."
+                )
                 raise
 
     def get_session_models(self, session_id: str) -> List[ModelResult]:
         """Get all models stored in a session.
-        
+
         Args:
             session_id: Session identifier
-            
+
         Returns:
             List of ModelResult objects
         """
@@ -130,11 +131,11 @@ class ModelComparisonService:
 
     def get_model_by_id(self, session_id: str, model_id: str) -> Optional[ModelResult]:
         """Get a specific model by ID.
-        
+
         Args:
             session_id: Session identifier
             model_id: Model identifier
-            
+
         Returns:
             ModelResult if found, None otherwise
         """
@@ -145,16 +146,16 @@ class ModelComparisonService:
 
     def compare_models(self, request: ModelComparisonRequest) -> ModelComparisonResult:
         """Compare multiple models within a session.
-        
+
         Args:
             request: Model comparison request
-            
+
         Returns:
             ModelComparisonResult with detailed comparison
         """
         with MemoryTracker("compare_models"):
             start_time = time.time()
-            
+
             try:
                 self.logger.info(f"Starting model comparison for session {request.session_id}")
 
@@ -165,11 +166,11 @@ class ModelComparisonService:
                         message="Session not found",
                         models=[],
                         comparison_count=0,
-                        processing_time_seconds=time.time() - start_time
+                        processing_time_seconds=time.time() - start_time,
                     )
 
                 storage = self.session_storage[request.session_id]
-                
+
                 # Get models to compare
                 models = []
                 for model_id in request.model_ids:
@@ -180,7 +181,7 @@ class ModelComparisonService:
                             message=f"Model {model_id} not found in session",
                             models=[],
                             comparison_count=0,
-                            processing_time_seconds=time.time() - start_time
+                            processing_time_seconds=time.time() - start_time,
                         )
                     models.append(model)
 
@@ -217,28 +218,32 @@ class ModelComparisonService:
                     performance_comparison=performance_comparison,
                     best_overall_model_id=best_overall_model_id,
                     forecast_comparison=forecast_comparison,
-                    processing_time_seconds=processing_time
+                    processing_time_seconds=processing_time,
                 )
 
                 self.logger.info(f"Model comparison completed in {processing_time:.2f} seconds")
                 return result
 
             except Exception as e:
-                self.logger.error(f"Model comparison failed: {e}")
+                self.logger.error(
+                    "Model comparison failed. See details in next log entry if available."
+                )
                 return ModelComparisonResult(
                     success=False,
                     message=f"Model comparison failed: {str(e)}",
                     models=[],
                     comparison_count=0,
-                    processing_time_seconds=time.time() - start_time
+                    processing_time_seconds=time.time() - start_time,
                 )
 
-    def get_comparison_summary(self, comparison_result: ModelComparisonResult) -> ModelComparisonSummary:
+    def get_comparison_summary(
+        self, comparison_result: ModelComparisonResult
+    ) -> ModelComparisonSummary:
         """Generate a summary of model comparison results.
-        
+
         Args:
             comparison_result: Detailed comparison result
-            
+
         Returns:
             ModelComparisonSummary with key insights
         """
@@ -253,8 +258,12 @@ class ModelComparisonService:
             performance_winner = None
             if comparison_result.best_overall_model_id:
                 best_model = next(
-                    (m for m in comparison_result.models if m.model_id == comparison_result.best_overall_model_id),
-                    None
+                    (
+                        m
+                        for m in comparison_result.models
+                        if m.model_id == comparison_result.best_overall_model_id
+                    ),
+                    None,
                 )
                 if best_model:
                     performance_winner = best_model.name or best_model.model_id
@@ -267,26 +276,30 @@ class ModelComparisonService:
                 key_differences=key_differences[:5],  # Limit to top 5
                 performance_winner=performance_winner,
                 recommendation=recommendation,
-                parameter_differences_count=len([d for d in comparison_result.parameter_differences if d.is_different]),
-                performance_metrics_count=len(comparison_result.performance_comparison)
+                parameter_differences_count=len(
+                    [d for d in comparison_result.parameter_differences if d.is_different]
+                ),
+                performance_metrics_count=len(comparison_result.performance_comparison),
             )
 
-        except Exception as e:
-            self.logger.error(f"Failed to generate comparison summary: {e}")
+        except Exception:
+            self.logger.error(
+                "Failed to generate comparison summary. See details in next log entry if available."
+            )
             return ModelComparisonSummary(
                 total_models=0,
                 key_differences=[],
                 recommendation="Unable to generate recommendation due to error",
                 parameter_differences_count=0,
-                performance_metrics_count=0
+                performance_metrics_count=0,
             )
 
     def cleanup_session_models(self, session_id: str) -> bool:
         """Clean up all models for a session.
-        
+
         Args:
             session_id: Session identifier
-            
+
         Returns:
             True if cleanup successful, False otherwise
         """
@@ -294,28 +307,30 @@ class ModelComparisonService:
             if session_id in self.session_storage:
                 storage = self.session_storage[session_id]
                 model_count = storage.get_model_count()
-                
+
                 # Clean up the storage
                 storage.cleanup()
                 del self.session_storage[session_id]
-                
+
                 # Force garbage collection
                 gc.collect()
-                
+
                 self.logger.info(f"Cleaned up {model_count} models for session {session_id}")
                 return True
-            
+
             return False
 
-        except Exception as e:
-            self.logger.error(f"Failed to cleanup session models: {e}")
+        except Exception:
+            self.logger.error(
+                "Failed to cleanup session models. See details in next log entry if available."
+            )
             return False
 
     def _compare_parameters(self, models: List[ModelResult]) -> List[ParameterComparison]:
         """Compare parameters across models."""
         try:
             parameter_comparisons = []
-            
+
             if not models:
                 return parameter_comparisons
 
@@ -330,7 +345,7 @@ class ModelComparisonService:
             for param_name in sorted(all_params):
                 model_values = {}
                 param_type = self._get_parameter_type(param_name)
-                
+
                 for model in models:
                     if model.config:
                         config_dict = model.config.model_dump()
@@ -346,24 +361,28 @@ class ModelComparisonService:
                 unique_values = set(model_values.values())
                 is_different = len(unique_values) > 1
 
-                parameter_comparisons.append(ParameterComparison(
-                    parameter_name=param_name,
-                    model_values=model_values,
-                    is_different=is_different,
-                    parameter_type=param_type
-                ))
+                parameter_comparisons.append(
+                    ParameterComparison(
+                        parameter_name=param_name,
+                        model_values=model_values,
+                        is_different=is_different,
+                        parameter_type=param_type,
+                    )
+                )
 
             return parameter_comparisons
 
-        except Exception as e:
-            self.logger.error(f"Parameter comparison failed: {e}")
+        except Exception:
+            self.logger.error(
+                "Parameter comparison failed. See details in next log entry if available."
+            )
             return []
 
     def _compare_performance(self, models: List[ModelResult]) -> List[PerformanceComparison]:
         """Compare performance metrics across models."""
         try:
             performance_comparisons = []
-            
+
             # Collect all available metrics
             all_metrics = set()
             for model in models:
@@ -376,30 +395,31 @@ class ModelComparisonService:
             # Compare each metric
             for metric_name in sorted(all_metrics):
                 model_values = {}
-                
+
                 for model in models:
                     value = None
-                    
+
                     # Try to get from CV metrics first
                     if model.cv_metrics:
                         cv_dict = model.cv_metrics.model_dump()
                         value = cv_dict.get(metric_name)
-                    
+
                     # Fall back to training metrics
                     if value is None and model.training_metrics:
                         value = model.training_metrics.get(metric_name)
-                    
+
                     if value is not None and isinstance(value, (int, float)):
                         model_values[model.model_id] = float(value)
 
                 # Only compare if we have values for multiple models
                 if len(model_values) >= 2:
                     values = list(model_values.values())
-                    
+
                     # Determine best/worst (lower is better for error metrics)
-                    is_error_metric = any(term in metric_name.lower() 
-                                        for term in ['error', 'rmse', 'mae', 'mape'])
-                    
+                    is_error_metric = any(
+                        term in metric_name.lower() for term in ["error", "rmse", "mae", "mape"]
+                    )
+
                     if is_error_metric:
                         best_value = min(values)
                         worst_value = max(values)
@@ -408,8 +428,12 @@ class ModelComparisonService:
                         worst_value = min(values)
 
                     # Find model IDs for best/worst
-                    best_model_id = next(mid for mid, val in model_values.items() if val == best_value)
-                    worst_model_id = next(mid for mid, val in model_values.items() if val == worst_value)
+                    best_model_id = next(
+                        mid for mid, val in model_values.items() if val == best_value
+                    )
+                    worst_model_id = next(
+                        mid for mid, val in model_values.items() if val == worst_value
+                    )
 
                     # Calculate improvement percentage
                     improvement_pct = None
@@ -419,18 +443,22 @@ class ModelComparisonService:
                         else:
                             improvement_pct = ((best_value - worst_value) / worst_value) * 100
 
-                    performance_comparisons.append(PerformanceComparison(
-                        metric_name=metric_name,
-                        model_values=model_values,
-                        best_model_id=best_model_id,
-                        worst_model_id=worst_model_id,
-                        improvement_pct=improvement_pct
-                    ))
+                    performance_comparisons.append(
+                        PerformanceComparison(
+                            metric_name=metric_name,
+                            model_values=model_values,
+                            best_model_id=best_model_id,
+                            worst_model_id=worst_model_id,
+                            improvement_pct=improvement_pct,
+                        )
+                    )
 
             return performance_comparisons
 
-        except Exception as e:
-            self.logger.error(f"Performance comparison failed: {e}")
+        except Exception:
+            self.logger.error(
+                "Performance comparison failed. See details in next log entry if available."
+            )
             return []
 
     def _compare_forecasts(self, models: List[ModelResult]) -> Optional[Dict[str, Any]]:
@@ -440,50 +468,56 @@ class ModelComparisonService:
                 return None
 
             comparison_stats = {
-                'models_with_forecasts': len([m for m in models if m.forecast_data]),
-                'forecast_periods': {},
-                'prediction_ranges': {},
-                'correlation_matrix': {}
+                "models_with_forecasts": len([m for m in models if m.forecast_data]),
+                "forecast_periods": {},
+                "prediction_ranges": {},
+                "correlation_matrix": {},
             }
 
             # Compare forecast periods and ranges
             for model in models:
-                if model.forecast_data and 'yhat' in model.forecast_data:
-                    predictions = model.forecast_data['yhat']
-                    comparison_stats['forecast_periods'][model.model_id] = len(predictions)
-                    comparison_stats['prediction_ranges'][model.model_id] = {
-                        'min': min(predictions),
-                        'max': max(predictions),
-                        'mean': sum(predictions) / len(predictions)
+                if model.forecast_data and "yhat" in model.forecast_data:
+                    predictions = model.forecast_data["yhat"]
+                    comparison_stats["forecast_periods"][model.model_id] = len(predictions)
+                    comparison_stats["prediction_ranges"][model.model_id] = {
+                        "min": min(predictions),
+                        "max": max(predictions),
+                        "mean": sum(predictions) / len(predictions),
                     }
 
             # Calculate correlation between predictions if possible
             prediction_series = {}
             for model in models:
-                if model.forecast_data and 'yhat' in model.forecast_data:
-                    prediction_series[model.model_id] = model.forecast_data['yhat']
+                if model.forecast_data and "yhat" in model.forecast_data:
+                    prediction_series[model.model_id] = model.forecast_data["yhat"]
 
             if len(prediction_series) >= 2:
                 # Calculate pairwise correlations
                 model_ids = list(prediction_series.keys())
                 for i, model_id1 in enumerate(model_ids):
-                    for model_id2 in model_ids[i+1:]:
+                    for model_id2 in model_ids[i + 1 :]:
                         series1 = prediction_series[model_id1]
                         series2 = prediction_series[model_id2]
-                        
+
                         # Ensure same length
                         min_len = min(len(series1), len(series2))
                         if min_len > 1:
                             corr = np.corrcoef(series1[:min_len], series2[:min_len])[0, 1]
-                            comparison_stats['correlation_matrix'][f"{model_id1}_vs_{model_id2}"] = float(corr)
+                            comparison_stats["correlation_matrix"][
+                                f"{model_id1}_vs_{model_id2}"
+                            ] = float(corr)
 
             return comparison_stats
 
-        except Exception as e:
-            self.logger.error(f"Forecast comparison failed: {e}")
+        except Exception:
+            self.logger.error(
+                "Forecast comparison failed. See details in next log entry if available."
+            )
             return None
 
-    def _determine_best_model(self, performance_comparisons: List[PerformanceComparison]) -> Optional[str]:
+    def _determine_best_model(
+        self, performance_comparisons: List[PerformanceComparison]
+    ) -> Optional[str]:
         """Determine the best overall model based on performance metrics."""
         try:
             if not performance_comparisons:
@@ -491,7 +525,7 @@ class ModelComparisonService:
 
             # Score models based on how often they're the best
             model_scores = {}
-            
+
             for comparison in performance_comparisons:
                 best_model_id = comparison.best_model_id
                 if best_model_id not in model_scores:
@@ -504,8 +538,10 @@ class ModelComparisonService:
 
             return None
 
-        except Exception as e:
-            self.logger.error(f"Failed to determine best model: {e}")
+        except Exception:
+            self.logger.error(
+                "Failed to determine best model. See details in next log entry if available."
+            )
             return None
 
     def _generate_recommendation(self, comparison_result: ModelComparisonResult) -> str:
@@ -522,8 +558,12 @@ class ModelComparisonService:
             # Performance-based recommendation
             if comparison_result.best_overall_model_id:
                 best_model = next(
-                    (m for m in comparison_result.models if m.model_id == comparison_result.best_overall_model_id),
-                    None
+                    (
+                        m
+                        for m in comparison_result.models
+                        if m.model_id == comparison_result.best_overall_model_id
+                    ),
+                    None,
                 )
                 if best_model:
                     model_name = best_model.name or f"Model {best_model.model_id[:8]}"
@@ -531,47 +571,74 @@ class ModelComparisonService:
 
             # Parameter differences
             if comparison_result.parameters_identical:
-                recommendations.append("Models have identical parameters - performance differences may be due to randomness")
+                recommendations.append(
+                    "Models have identical parameters - performance differences may be due to randomness"
+                )
             else:
-                diff_count = len([d for d in comparison_result.parameter_differences if d.is_different])
-                recommendations.append(f"{diff_count} parameter differences found - review key differences")
+                diff_count = len(
+                    [d for d in comparison_result.parameter_differences if d.is_different]
+                )
+                recommendations.append(
+                    f"{diff_count} parameter differences found - review key differences"
+                )
 
             # Performance insights
             if comparison_result.performance_comparison:
                 significant_improvements = [
-                    p for p in comparison_result.performance_comparison 
+                    p
+                    for p in comparison_result.performance_comparison
                     if p.improvement_pct and p.improvement_pct > 10
                 ]
                 if significant_improvements:
-                    recommendations.append(f"{len(significant_improvements)} metrics show >10% improvement")
+                    recommendations.append(
+                        f"{len(significant_improvements)} metrics show >10% improvement"
+                    )
 
-            return "; ".join(recommendations) if recommendations else "No specific recommendations available"
+            return (
+                "; ".join(recommendations)
+                if recommendations
+                else "No specific recommendations available"
+            )
 
-        except Exception as e:
-            self.logger.error(f"Failed to generate recommendation: {e}")
+        except Exception:
+            self.logger.error(
+                "Failed to generate recommendation. See details in next log entry if available."
+            )
             return "Unable to generate recommendation due to error"
 
     def _get_parameter_type(self, param_name: str) -> str:
         """Categorize parameter by type."""
-        seasonality_params = ['yearly_seasonality', 'weekly_seasonality', 'daily_seasonality', 
-                            'seasonality_mode', 'seasonality_prior_scale', 'custom_seasonalities']
-        trend_params = ['growth', 'changepoint_prior_scale', 'n_changepoints', 'changepoint_range', 'changepoints']
-        holiday_params = ['holidays_prior_scale', 'holidays_country', 'custom_holidays']
-        uncertainty_params = ['mcmc_samples', 'uncertainty_samples', 'interval_width']
-        regressor_params = ['regressors']
-        
+        seasonality_params = [
+            "yearly_seasonality",
+            "weekly_seasonality",
+            "daily_seasonality",
+            "seasonality_mode",
+            "seasonality_prior_scale",
+            "custom_seasonalities",
+        ]
+        trend_params = [
+            "growth",
+            "changepoint_prior_scale",
+            "n_changepoints",
+            "changepoint_range",
+            "changepoints",
+        ]
+        holiday_params = ["holidays_prior_scale", "holidays_country", "custom_holidays"]
+        uncertainty_params = ["mcmc_samples", "uncertainty_samples", "interval_width"]
+        regressor_params = ["regressors"]
+
         if param_name in seasonality_params:
-            return 'seasonality'
+            return "seasonality"
         elif param_name in trend_params:
-            return 'trend'
+            return "trend"
         elif param_name in holiday_params:
-            return 'holidays'
+            return "holidays"
         elif param_name in uncertainty_params:
-            return 'uncertainty'
+            return "uncertainty"
         elif param_name in regressor_params:
-            return 'regressors'
+            return "regressors"
         else:
-            return 'basic'
+            return "basic"
 
     def _dataframe_to_dict(self, df: pd.DataFrame) -> Dict[str, List]:
         """Convert DataFrame to dictionary for JSON serialization."""
@@ -580,13 +647,17 @@ class ModelComparisonService:
             for column in df.columns:
                 # Handle datetime columns
                 if pd.api.types.is_datetime64_any_dtype(df[column]):
-                    result[column] = df[column].dt.strftime('%Y-%m-%d %H:%M:%S').tolist()
+                    result[column] = df[column].dt.strftime("%Y-%m-%d %H:%M:%S").tolist()
                 else:
                     # Convert to native Python types
-                    result[column] = df[column].astype(object).where(pd.notnull(df[column]), None).tolist()
+                    result[column] = (
+                        df[column].astype(object).where(pd.notnull(df[column]), None).tolist()
+                    )
             return result
-        except Exception as e:
-            self.logger.error(f"Failed to convert DataFrame to dict: {e}")
+        except Exception:
+            self.logger.error(
+                "Failed to convert DataFrame to dict. See details in next log entry if available."
+            )
             return {}
 
 

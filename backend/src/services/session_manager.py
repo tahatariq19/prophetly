@@ -14,21 +14,21 @@ logger = logging.getLogger(__name__)
 
 
 class SessionManager:
-    """Privacy-first session manager that stores data only in memory.
-    
+    """Session manager that stores data only in memory.
+
     Features:
     - Automatic session cleanup and expiration
     - Memory usage monitoring and limits
-    - Secure data destruction
+    - Data cleanup
     - No persistent storage
     """
 
     def __init__(
         self,
-        max_session_age: timedelta = None,
-        cleanup_interval: int = None,
-        max_memory_mb: int = None,
-        auto_start_cleanup: bool = True
+        max_session_age: Optional[timedelta] = None,
+        cleanup_interval: Optional[int] = None,
+        max_memory_mb: Optional[int] = None,
+        auto_start_cleanup: bool = True,
     ):
         self.sessions: Dict[str, SessionData] = {}
         self.max_session_age = max_session_age or timedelta(seconds=settings.MAX_SESSION_AGE)
@@ -64,10 +64,7 @@ class SessionManager:
 
         # Create new session
         expires_at = datetime.now() + self.max_session_age
-        session = SessionData(
-            id=session_id,
-            expires_at=expires_at
-        )
+        session = SessionData(id=session_id, expires_at=expires_at)
 
         self.sessions[session_id] = session
         logger.info(f"Created session {session_id}, expires at {expires_at}")
@@ -185,7 +182,7 @@ class SessionManager:
             expired_sessions=expired_sessions,
             total_memory_mb=total_memory_bytes / 1024 / 1024,
             oldest_session_age_minutes=max(session_ages) if session_ages else None,
-            newest_session_age_minutes=min(session_ages) if session_ages else None
+            newest_session_age_minutes=min(session_ages) if session_ages else None,
         )
 
     def check_memory_limits(self) -> bool:
@@ -199,10 +196,7 @@ class SessionManager:
             return 0
 
         # Sort sessions by last accessed time (oldest first)
-        sessions_by_age = sorted(
-            self.sessions.items(),
-            key=lambda x: x[1].last_accessed
-        )
+        sessions_by_age = sorted(self.sessions.items(), key=lambda x: x[1].last_accessed)
 
         cleaned_count = 0
         while not self.check_memory_limits() and sessions_by_age:
@@ -241,8 +235,10 @@ class SessionManager:
 
                     await asyncio.sleep(self.cleanup_interval)
 
-                except Exception as e:
-                    logger.error(f"Error in cleanup task: {e}")
+                except Exception:
+                    logger.error(
+                        "Error in cleanup task. See details in next log entry if available."
+                    )
                     await asyncio.sleep(self.cleanup_interval)
 
         # Create and start the cleanup task

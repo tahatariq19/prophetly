@@ -283,36 +283,6 @@ export const fileDownload = {
   }
 }
 
-/**
- * Privacy-compliant data validation
- */
-export const dataValidation = {
-  /**
-   * Check if data contains potential PII
-   */
-  containsPII(data) {
-    const piiPatterns = [
-      /\b\d{3}-\d{2}-\d{4}\b/, // SSN pattern
-      /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, // Email pattern
-      /\b\d{3}-\d{3}-\d{4}\b/, // Phone pattern
-    ]
-    
-    const dataString = JSON.stringify(data).toLowerCase()
-    return piiPatterns.some(pattern => pattern.test(dataString))
-  },
-
-  /**
-   * Sanitize data for privacy compliance
-   */
-  sanitizeForLogging(data) {
-    if (typeof data === 'string') {
-      return data.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
-                .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]')
-                .replace(/\b\d{3}-\d{3}-\d{4}\b/g, '[PHONE]')
-    }
-    return data
-  }
-}
 
 /**
  * Memory management utilities

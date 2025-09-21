@@ -4,7 +4,7 @@ import os
 
 
 class Settings:
-    """Application settings with privacy-first defaults."""
+    """Application settings."""
 
     # Environment
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
@@ -14,7 +14,7 @@ class Settings:
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
 
-    # Privacy settings
+    # Session settings
     MAX_SESSION_AGE: int = int(os.getenv("MAX_SESSION_AGE", "7200"))  # 2 hours
     MAX_MEMORY_MB: int = int(os.getenv("MAX_MEMORY_MB", "512"))
     AUTO_CLEANUP_INTERVAL: int = int(os.getenv("AUTO_CLEANUP_INTERVAL", "300"))  # 5 minutes

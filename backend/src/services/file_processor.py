@@ -28,7 +28,7 @@ class FileValidationError(Exception):
 
 class FileProcessor:
     """Privacy-first file processor for CSV uploads.
-    
+
     Features:
     - In-memory processing only (no temporary files)
     - Automatic encoding detection
@@ -39,7 +39,7 @@ class FileProcessor:
     """
 
     # Supported file extensions
-    ALLOWED_EXTENSIONS = {'.csv', '.txt'}
+    ALLOWED_EXTENSIONS = {".csv", ".txt"}
 
     # Maximum file size (configurable via settings)
     MAX_FILE_SIZE = settings.MAX_FILE_SIZE_MB * 1024 * 1024  # Convert to bytes
@@ -49,16 +49,16 @@ class FileProcessor:
     MAX_ROWS = 1000000
 
     # Encoding detection order (most common first)
-    ENCODING_CANDIDATES = ['utf-8', 'utf-8-sig', 'latin1', 'cp1252', 'iso-8859-1']
+    ENCODING_CANDIDATES = ["utf-8", "utf-8-sig", "latin1", "cp1252", "iso-8859-1"]
 
     # Security patterns to detect potentially malicious content
     SECURITY_PATTERNS = [
-        re.compile(r'<script[^>]*>.*?</script>', re.IGNORECASE | re.DOTALL),
-        re.compile(r'javascript:', re.IGNORECASE),
-        re.compile(r'vbscript:', re.IGNORECASE),
-        re.compile(r'on\w+\s*=', re.IGNORECASE),
-        re.compile(r'@import', re.IGNORECASE),
-        re.compile(r'expression\s*\(', re.IGNORECASE),
+        re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL),
+        re.compile(r"javascript:", re.IGNORECASE),
+        re.compile(r"vbscript:", re.IGNORECASE),
+        re.compile(r"on\w+\s*=", re.IGNORECASE),
+        re.compile(r"@import", re.IGNORECASE),
+        re.compile(r"expression\s*\(", re.IGNORECASE),
     ]
 
     def __init__(self):
@@ -66,13 +66,13 @@ class FileProcessor:
 
     async def process_upload(self, file: UploadFile) -> Dict[str, Any]:
         """Process uploaded file and return parsed data with metadata.
-        
+
         Args:
             file: FastAPI UploadFile object
-            
+
         Returns:
             Dict containing parsed data, metadata, and validation results
-            
+
         Raises:
             FileValidationError: If file validation fails
             HTTPException: If processing fails
@@ -105,24 +105,28 @@ class FileProcessor:
                 data_dict = self._dataframe_to_dict(df)
 
                 return {
-                    'success': True,
-                    'data': data_dict,
-                    'metadata': metadata,
-                    'column_info': column_info,
-                    'message': f'Successfully processed {len(df)} rows and {len(df.columns)} columns'
+                    "success": True,
+                    "data": data_dict,
+                    "metadata": metadata,
+                    "column_info": column_info,
+                    "message": f"Successfully processed {len(df)} rows and {len(df.columns)} columns",
                 }
 
             except FileValidationError as e:
-                self.logger.warning(f"File validation failed: {e}")
+                self.logger.warning(
+                    "File validation failed. See details in next log entry if available."
+                )
                 raise HTTPException(status_code=400, detail=str(e))
-            except Exception as e:
-                self.logger.error(f"File processing failed: {e}")
+            except Exception:
+                self.logger.error(
+                    "File processing failed. See details in next log entry if available."
+                )
                 raise HTTPException(status_code=500, detail="File processing failed")
             finally:
                 # Ensure file content is cleared from memory
-                if 'content' in locals():
+                if "content" in locals():
                     del content
-                if 'df' in locals():
+                if "df" in locals():
                     del df
 
     def _validate_file_basic(self, file: UploadFile) -> None:
@@ -132,7 +136,7 @@ class FileProcessor:
             raise FileValidationError("No filename provided")
 
         # Check file extension
-        file_ext = '.' + file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+        file_ext = "." + file.filename.split(".")[-1].lower() if "." in file.filename else ""
         if file_ext not in self.ALLOWED_EXTENSIONS:
             raise FileValidationError(
                 f"Unsupported file type '{file_ext}'. "
@@ -140,7 +144,7 @@ class FileProcessor:
             )
 
         # Check content type
-        if file.content_type and not file.content_type.startswith(('text/', 'application/csv')):
+        if file.content_type and not file.content_type.startswith(("text/", "application/csv")):
             raise FileValidationError(
                 f"Invalid content type '{file.content_type}'. Expected text or CSV format."
             )
@@ -166,10 +170,10 @@ class FileProcessor:
         """Scan file content for potential security issues."""
         try:
             # Convert to string for pattern matching (try UTF-8 first)
-            text_content = content.decode('utf-8', errors='ignore')
+            text_content = content.decode("utf-8", errors="ignore")
         except UnicodeDecodeError:
             # If UTF-8 fails, try latin1 which accepts any byte sequence
-            text_content = content.decode('latin1', errors='ignore')
+            text_content = content.decode("latin1", errors="ignore")
 
         # Check for suspicious patterns
         for pattern in self.SECURITY_PATTERNS:
@@ -179,7 +183,7 @@ class FileProcessor:
                 )
 
         # Check for extremely long lines (potential DoS)
-        lines = text_content.split('\n')
+        lines = text_content.split("\n")
         max_line_length = max(len(line) for line in lines) if lines else 0
         if max_line_length > 100000:  # 100KB per line
             raise FileValidationError("File contains extremely long lines and may be malicious")
@@ -201,10 +205,10 @@ class FileProcessor:
                     csv_buffer,
                     encoding=None,  # Already decoded
                     low_memory=False,
-                    na_values=['', 'NA', 'N/A', 'null', 'NULL', 'None', 'NaN'],
+                    na_values=["", "NA", "N/A", "null", "NULL", "None", "NaN"],
                     keep_default_na=True,
                     skip_blank_lines=True,
-                    nrows=self.MAX_ROWS  # Limit rows for security
+                    nrows=self.MAX_ROWS,  # Limit rows for security
                 )
 
                 self.logger.info(f"Successfully parsed CSV with encoding: {encoding}")
@@ -261,12 +265,12 @@ class FileProcessor:
 
             if col_data.empty:
                 column_info[col] = {
-                    'type': 'empty',
-                    'non_null_count': 0,
-                    'null_count': len(df[col]),
-                    'is_potential_date': False,
-                    'is_potential_value': False,
-                    'sample_values': []
+                    "type": "empty",
+                    "non_null_count": 0,
+                    "null_count": len(df[col]),
+                    "is_potential_date": False,
+                    "is_potential_value": False,
+                    "sample_values": [],
                 }
                 continue
 
@@ -279,36 +283,45 @@ class FileProcessor:
             col_type, is_potential_date, is_potential_value = self._analyze_column_type(col_data)
 
             column_info[col] = {
-                'type': col_type,
-                'non_null_count': int(non_null_count),
-                'null_count': int(null_count),
-                'is_potential_date': is_potential_date,
-                'is_potential_value': is_potential_value,
-                'sample_values': [str(v) for v in sample_values]  # Convert to strings for serialization
+                "type": col_type,
+                "non_null_count": int(non_null_count),
+                "null_count": int(null_count),
+                "is_potential_date": is_potential_date,
+                "is_potential_value": is_potential_value,
+                "sample_values": [
+                    str(v) for v in sample_values
+                ],  # Convert to strings for serialization
             }
 
             # Add type-specific information
-            if col_type == 'numeric':
-                column_info[col].update({
-                    'min': float(col_data.min()),
-                    'max': float(col_data.max()),
-                    'mean': float(col_data.mean()),
-                    'std': float(col_data.std()) if len(col_data) > 1 else 0.0
-                })
-            elif col_type == 'datetime':
-                column_info[col].update({
-                    'min_date': col_data.min().isoformat() if hasattr(col_data.min(), 'isoformat') else str(col_data.min()),
-                    'max_date': col_data.max().isoformat() if hasattr(col_data.max(), 'isoformat') else str(col_data.max())
-                })
-            elif col_type == 'text':
+            if col_type == "numeric":
+                column_info[col].update(
+                    {
+                        "min": float(col_data.min()),
+                        "max": float(col_data.max()),
+                        "mean": float(col_data.mean()),
+                        "std": float(col_data.std()) if len(col_data) > 1 else 0.0,
+                    }
+                )
+            elif col_type == "datetime":
+                column_info[col].update(
+                    {
+                        "min_date": col_data.min().isoformat()
+                        if hasattr(col_data.min(), "isoformat")
+                        else str(col_data.min()),
+                        "max_date": col_data.max().isoformat()
+                        if hasattr(col_data.max(), "isoformat")
+                        else str(col_data.max()),
+                    }
+                )
+            elif col_type == "text":
                 unique_count = int(col_data.nunique())
                 most_common_dict = col_data.value_counts().head(3).to_dict()
                 # Convert numpy types to Python types
                 most_common_dict = {str(k): int(v) for k, v in most_common_dict.items()}
-                column_info[col].update({
-                    'unique_count': unique_count,
-                    'most_common': most_common_dict
-                })
+                column_info[col].update(
+                    {"unique_count": unique_count, "most_common": most_common_dict}
+                )
 
         return column_info
 
@@ -319,22 +332,22 @@ class FileProcessor:
 
         # Try to convert to numeric
         try:
-            pd.to_numeric(series, errors='raise')
-            col_type = 'numeric'
+            pd.to_numeric(series, errors="raise")
+            col_type = "numeric"
             is_potential_value = True
         except (ValueError, TypeError):
             # Try to convert to datetime
             try:
-                pd.to_datetime(series, errors='raise')
-                col_type = 'datetime'
+                pd.to_datetime(series, errors="raise")
+                col_type = "datetime"
                 is_potential_date = True
             except (ValueError, TypeError):
                 # Check if it looks like a date string
                 if self._looks_like_date_column(series):
-                    col_type = 'potential_datetime'
+                    col_type = "potential_datetime"
                     is_potential_date = True
                 else:
-                    col_type = 'text'
+                    col_type = "text"
 
         return col_type, is_potential_date, is_potential_value
 
@@ -342,11 +355,11 @@ class FileProcessor:
         """Check if a text column looks like it contains dates."""
         # Common date patterns
         date_patterns = [
-            r'\d{4}-\d{2}-\d{2}',  # YYYY-MM-DD
-            r'\d{2}/\d{2}/\d{4}',  # MM/DD/YYYY
-            r'\d{2}-\d{2}-\d{4}',  # MM-DD-YYYY
-            r'\d{4}/\d{2}/\d{2}',  # YYYY/MM/DD
-            r'\d{1,2}/\d{1,2}/\d{2,4}',  # M/D/YY or MM/DD/YYYY
+            r"\d{4}-\d{2}-\d{2}",  # YYYY-MM-DD
+            r"\d{2}/\d{2}/\d{4}",  # MM/DD/YYYY
+            r"\d{2}-\d{2}-\d{4}",  # MM-DD-YYYY
+            r"\d{4}/\d{2}/\d{2}",  # YYYY/MM/DD
+            r"\d{1,2}/\d{1,2}/\d{2,4}",  # M/D/YY or MM/DD/YYYY
         ]
 
         # Check first few non-null values
@@ -364,36 +377,40 @@ class FileProcessor:
         file: UploadFile,
         df: pd.DataFrame,
         encoding: str,
-        column_info: Dict[str, Dict[str, Any]]
+        column_info: Dict[str, Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Generate comprehensive file metadata."""
         # Find potential date and value columns
-        potential_date_cols = [col for col, info in column_info.items() if info['is_potential_date']]
-        potential_value_cols = [col for col, info in column_info.items() if info['is_potential_value']]
+        potential_date_cols = [
+            col for col, info in column_info.items() if info["is_potential_date"]
+        ]
+        potential_value_cols = [
+            col for col, info in column_info.items() if info["is_potential_value"]
+        ]
 
         return {
-            'filename': file.filename,
-            'file_size_bytes': 0,  # File size will be calculated from content length
-            'encoding': encoding,
-            'rows': int(len(df)),
-            'columns': int(len(df.columns)),
-            'column_names': list(df.columns),
-            'potential_date_columns': potential_date_cols,
-            'potential_value_columns': potential_value_cols,
-            'processed_at': datetime.now().isoformat(),
-            'memory_usage_bytes': int(df.memory_usage(deep=True).sum()),
-            'has_missing_values': bool(df.isnull().any().any()),
-            'missing_value_count': int(df.isnull().sum().sum()),
-            'privacy_notice': 'File processed in memory only - no data stored on server'
+            "filename": file.filename,
+            "file_size_bytes": 0,  # File size will be calculated from content length
+            "encoding": encoding,
+            "rows": int(len(df)),
+            "columns": int(len(df.columns)),
+            "column_names": list(df.columns),
+            "potential_date_columns": potential_date_cols,
+            "potential_value_columns": potential_value_cols,
+            "processed_at": datetime.now().isoformat(),
+            "memory_usage_bytes": int(df.memory_usage(deep=True).sum()),
+            "has_missing_values": bool(df.isnull().any().any()),
+            "missing_value_count": int(df.isnull().sum().sum()),
+            "privacy_notice": "File processed in memory only - no data stored on server",
         }
 
     def _dataframe_to_dict(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Convert DataFrame to a serializable dictionary format."""
         # Convert DataFrame to dict with proper handling of NaN values
         data_dict = {
-            'columns': list(df.columns),
-            'data': df.fillna('').to_dict('records'),  # Replace NaN with empty string
-            'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()}
+            "columns": list(df.columns),
+            "data": df.fillna("").to_dict("records"),  # Replace NaN with empty string
+            "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
         }
 
         return data_dict

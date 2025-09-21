@@ -2,7 +2,6 @@
 
 import gc
 import logging
-import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, status
@@ -11,7 +10,6 @@ from ..models.model_comparison import (
     ModelComparisonRequest,
     ModelComparisonResult,
     ModelComparisonSummary,
-    ModelResult
 )
 from ..services.model_comparison_service import model_comparison_service
 from ..services.session_manager import session_manager
@@ -31,16 +29,16 @@ async def store_model_result(
     cv_metrics: Optional[Dict[str, float]] = None,
     training_metrics: Optional[Dict[str, float]] = None,
     processing_time_seconds: Optional[float] = None,
-    data_points: Optional[int] = None
+    data_points: Optional[int] = None,
 ) -> Dict[str, str]:
     """Store a model result for comparison within a session.
-    
+
     This endpoint stores forecast results in memory for comparison:
     1. Validates session exists
     2. Stores model configuration and results
     3. Returns model ID for future reference
     4. Automatically cleans up when session expires
-    
+
     Args:
         session_id: Session identifier
         model_name: Human-readable model name
@@ -51,10 +49,10 @@ async def store_model_result(
         training_metrics: Training performance metrics
         processing_time_seconds: Total processing time
         data_points: Number of training data points
-        
+
     Returns:
         Dictionary with model_id for the stored result
-        
+
     Raises:
         HTTPException: If session not found or storage fails
     """
@@ -66,8 +64,7 @@ async def store_model_result(
             session_data = session_manager.get_session(session_id)
             if not session_data:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Session not found or expired"
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or expired"
                 )
 
             # Parse configuration if provided
@@ -75,11 +72,12 @@ async def store_model_result(
             if config_json:
                 try:
                     from ..models.prophet_config import ForecastConfig
+
                     config = ForecastConfig.from_json(config_json)
                 except Exception as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Invalid configuration JSON: {str(e)}"
+                        detail=f"Invalid configuration JSON: {str(e)}",
                     )
 
             # Store the model result
@@ -88,11 +86,11 @@ async def store_model_result(
                 name=model_name,
                 config=config,
                 forecast_data=None,  # Will be converted from dict if provided
-                components=None,     # Will be converted from dict if provided
+                components=None,  # Will be converted from dict if provided
                 cv_metrics=cv_metrics,
                 training_metrics=training_metrics,
                 processing_time_seconds=processing_time_seconds,
-                data_points=data_points
+                data_points=data_points,
             )
 
             logger.info(f"Model result stored with ID: {model_id}")
@@ -101,23 +99,25 @@ async def store_model_result(
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Failed to store model result: {e}")
+            logger.error(
+                "Failed to store model result. See details in next log entry if available."
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to store model result: {str(e)}"
+                detail=f"Failed to store model result: {str(e)}",
             )
 
 
 @router.get("/session/{session_id}/models", response_model=List[Dict[str, Any]])
 async def get_session_models(session_id: str) -> List[Dict[str, Any]]:
     """Get all models stored in a session for comparison.
-    
+
     Args:
         session_id: Session identifier
-        
+
     Returns:
         List of model summaries with basic information
-        
+
     Raises:
         HTTPException: If session not found
     """
@@ -128,8 +128,7 @@ async def get_session_models(session_id: str) -> List[Dict[str, Any]]:
         session_data = session_manager.get_session(session_id)
         if not session_data:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Session not found or expired"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or expired"
             )
 
         # Get models from comparison service
@@ -147,9 +146,9 @@ async def get_session_models(session_id: str) -> List[Dict[str, Any]]:
                 "has_cv_metrics": model.cv_metrics is not None,
                 "has_training_metrics": model.training_metrics is not None,
                 "has_forecast_data": model.forecast_data is not None,
-                "has_components": model.components is not None
+                "has_components": model.components is not None,
             }
-            
+
             # Add configuration summary if available
             if model.config:
                 config_summary = model.config.get_summary()
@@ -163,50 +162,53 @@ async def get_session_models(session_id: str) -> List[Dict[str, Any]]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to retrieve session models: {e}")
+        logger.error(
+            "Failed to retrieve session models. See details in next log entry if available."
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve session models: {str(e)}"
+            detail=f"Failed to retrieve session models: {str(e)}",
         )
 
 
 @router.post("/compare", response_model=ModelComparisonResult)
 async def compare_models(request: ModelComparisonRequest) -> ModelComparisonResult:
     """Compare multiple models within a session.
-    
+
     This endpoint performs comprehensive model comparison:
     1. Validates session and model availability
     2. Compares parameters between models
     3. Compares performance metrics
     4. Optionally compares forecast data
     5. Returns detailed comparison results
-    
+
     Args:
         request: Model comparison request with session ID and model IDs
-        
+
     Returns:
         ModelComparisonResult with detailed comparison analysis
-        
+
     Raises:
         HTTPException: If session/models not found or comparison fails
     """
     with MemoryTracker("compare_models"):
         try:
-            logger.info(f"Comparing {len(request.model_ids)} models in session {request.session_id}")
+            logger.info(
+                f"Comparing {len(request.model_ids)} models in session {request.session_id}"
+            )
 
             # Validate session exists
             session_data = session_manager.get_session(request.session_id)
             if not session_data:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Session not found or expired"
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or expired"
                 )
 
             # Validate minimum models for comparison
             if len(request.model_ids) < 2:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="At least 2 models required for comparison"
+                    detail="At least 2 models required for comparison",
                 )
 
             # Perform comparison
@@ -214,38 +216,37 @@ async def compare_models(request: ModelComparisonRequest) -> ModelComparisonResu
 
             if not comparison_result.success:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=comparison_result.message
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=comparison_result.message
                 )
 
-            logger.info(f"Model comparison completed successfully")
+            logger.info("Model comparison completed successfully")
             return comparison_result
 
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Model comparison failed: {e}")
+            logger.error("Model comparison failed. See details in next log entry if available.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Model comparison failed: {str(e)}"
+                detail=f"Model comparison failed: {str(e)}",
             )
 
 
 @router.post("/compare/summary", response_model=ModelComparisonSummary)
 async def get_comparison_summary(request: ModelComparisonRequest) -> ModelComparisonSummary:
     """Get a summary of model comparison results.
-    
+
     This endpoint provides a quick overview of model differences:
     1. Performs model comparison
     2. Generates summary with key insights
     3. Provides recommendations
-    
+
     Args:
         request: Model comparison request
-        
+
     Returns:
         ModelComparisonSummary with key insights and recommendations
-        
+
     Raises:
         HTTPException: If comparison fails
     """
@@ -264,24 +265,26 @@ async def get_comparison_summary(request: ModelComparisonRequest) -> ModelCompar
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate comparison summary: {e}")
+        logger.error(
+            "Failed to generate comparison summary. See details in next log entry if available."
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate comparison summary: {str(e)}"
+            detail=f"Failed to generate comparison summary: {str(e)}",
         )
 
 
 @router.get("/session/{session_id}/model/{model_id}", response_model=Dict[str, Any])
 async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
     """Get detailed information about a specific model.
-    
+
     Args:
         session_id: Session identifier
         model_id: Model identifier
-        
+
     Returns:
         Dictionary with detailed model information
-        
+
     Raises:
         HTTPException: If session or model not found
     """
@@ -292,8 +295,7 @@ async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
         session_data = session_manager.get_session(session_id)
         if not session_data:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Session not found or expired"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or expired"
             )
 
         # Get model details
@@ -301,7 +303,7 @@ async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
         if not model:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Model {model_id} not found in session"
+                detail=f"Model {model_id} not found in session",
             )
 
         # Return detailed information
@@ -314,7 +316,7 @@ async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
             "cv_metrics": model.cv_metrics.model_dump() if model.cv_metrics else None,
             "training_metrics": model.training_metrics,
             "has_forecast_data": model.forecast_data is not None,
-            "has_components": model.components is not None
+            "has_components": model.components is not None,
         }
 
         # Add configuration details if available
@@ -327,9 +329,13 @@ async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
                 "columns": list(model.forecast_data.keys()),
                 "data_points": len(next(iter(model.forecast_data.values()), [])),
                 "date_range": {
-                    "start": min(model.forecast_data.get('ds', [])) if 'ds' in model.forecast_data else None,
-                    "end": max(model.forecast_data.get('ds', [])) if 'ds' in model.forecast_data else None
-                }
+                    "start": min(model.forecast_data.get("ds", []))
+                    if "ds" in model.forecast_data
+                    else None,
+                    "end": max(model.forecast_data.get("ds", []))
+                    if "ds" in model.forecast_data
+                    else None,
+                },
             }
             details["forecast_summary"] = forecast_summary
 
@@ -337,7 +343,7 @@ async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
         if model.components:
             components_summary = {
                 "component_names": list(model.components.keys()),
-                "component_count": len(model.components)
+                "component_count": len(model.components),
             }
             details["components_summary"] = components_summary
 
@@ -347,24 +353,26 @@ async def get_model_details(session_id: str, model_id: str) -> Dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to retrieve model details: {e}")
+        logger.error(
+            "Failed to retrieve model details. See details in next log entry if available."
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve model details: {str(e)}"
+            detail=f"Failed to retrieve model details: {str(e)}",
         )
 
 
 @router.delete("/session/{session_id}/model/{model_id}")
 async def delete_model(session_id: str, model_id: str) -> Dict[str, str]:
     """Delete a specific model from session storage.
-    
+
     Args:
         session_id: Session identifier
         model_id: Model identifier
-        
+
     Returns:
         Success message
-        
+
     Raises:
         HTTPException: If session or model not found
     """
@@ -375,8 +383,7 @@ async def delete_model(session_id: str, model_id: str) -> Dict[str, str]:
         session_data = session_manager.get_session(session_id)
         if not session_data:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Session not found or expired"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or expired"
             )
 
         # Delete the model
@@ -384,7 +391,7 @@ async def delete_model(session_id: str, model_id: str) -> Dict[str, str]:
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Model {model_id} not found in session"
+                detail=f"Model {model_id} not found in session",
             )
 
         # Force garbage collection
@@ -396,23 +403,23 @@ async def delete_model(session_id: str, model_id: str) -> Dict[str, str]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete model: {e}")
+        logger.error("Failed to delete model. See details in next log entry if available.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete model: {str(e)}"
+            detail=f"Failed to delete model: {str(e)}",
         )
 
 
 @router.delete("/session/{session_id}/models")
 async def cleanup_session_models(session_id: str) -> Dict[str, str]:
     """Clean up all models for a session.
-    
+
     Args:
         session_id: Session identifier
-        
+
     Returns:
         Success message with cleanup count
-        
+
     Raises:
         HTTPException: If session not found or cleanup fails
     """
@@ -423,8 +430,7 @@ async def cleanup_session_models(session_id: str) -> Dict[str, str]:
         session_data = session_manager.get_session(session_id)
         if not session_data:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Session not found or expired"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or expired"
             )
 
         # Get model count before cleanup
@@ -436,7 +442,7 @@ async def cleanup_session_models(session_id: str) -> Dict[str, str]:
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to cleanup session models"
+                detail="Failed to cleanup session models",
             )
 
         logger.info(f"Cleaned up {model_count} models for session {session_id}")
@@ -445,8 +451,10 @@ async def cleanup_session_models(session_id: str) -> Dict[str, str]:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to cleanup session models: {e}")
+        logger.error(
+            "Failed to cleanup session models. See details in next log entry if available."
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to cleanup session models: {str(e)}"
+            detail=f"Failed to cleanup session models: {str(e)}",
         )
