@@ -1,8 +1,6 @@
 # Development environment for Prophet Web Interface
 # Privacy-first, stateless architecture with no persistent storage
 
-version: '3.8'
-
 services:
   backend:
     build: ./backend

@@ -234,7 +234,7 @@
             <div class="nav-item-arrow">
               <i class="bi bi-chevron-right"></i>
             </div>
-          </button>
+          </router-link>
         </div>
       </nav>
 
