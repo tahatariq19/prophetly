@@ -214,6 +214,7 @@ secrets.json
 .vscode/
 .idea/
 .kiro/
+.kilocode/
 *.swp
 *.swo
 *~
