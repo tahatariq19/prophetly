@@ -1,6 +1,9 @@
 # Prophet Web Interface Backend
 # Privacy-first FastAPI application
 
+import logging
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -68,8 +71,15 @@ app.include_router(cross_validation_router)
 app.include_router(model_comparison_router)
 app.include_router(export_router)
 
-# Serve static files for the frontend
-app.mount("/", StaticFiles(directory="src/static", html=True), name="static")
+logger = logging.getLogger(__name__)
+
+# Serve static files for the frontend when available
+static_directory = Path(__file__).resolve().parent / "static"
+if static_directory.exists():
+    app.mount("/", StaticFiles(directory=str(static_directory), html=True), name="static")
+else:
+    logger.warning("Static directory %s not found; skipping mount", static_directory)
+
 
 @app.get("/")
 async def root():
