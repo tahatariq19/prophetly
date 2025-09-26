@@ -14,6 +14,8 @@ services:
       - ENVIRONMENT=production
       - LOG_LEVEL=WARNING
       - MAX_SESSION_AGE=7200
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend,0.0.0.0,*.github.dev,*.app.github.dev,*.render.com
+      - ALLOWED_ORIGINS=http://localhost,http://localhost:80,https://localhost,http://frontend:80,https://*.github.dev,https://*.app.github.dev
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -31,6 +33,7 @@ services:
       - backend
     environment:
       - NODE_ENV=production
+      - VITE_API_URL=http://backend:8000
     restart: unless-stopped
 
 networks:

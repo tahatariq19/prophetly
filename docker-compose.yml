@@ -10,6 +10,8 @@ services:
       - ENVIRONMENT=development
       - LOG_LEVEL=INFO
       - MAX_SESSION_AGE=7200  # 2 hours in seconds
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend,0.0.0.0,*.github.dev,*.app.github.dev,*.render.com,testserver
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://frontend:80,https://*.github.dev,https://*.app.github.dev
     volumes:
       - ./backend/src:/app/src
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
@@ -30,7 +32,7 @@ services:
       - ./frontend/public:/app/public
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://backend:8000
 
 networks:
   default:
