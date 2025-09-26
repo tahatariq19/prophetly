@@ -81,10 +81,22 @@ export default api
 export const checkHealth = async () => {
   try {
     const response = await api.get('/health')
+    const data = response.data || {}
+    const isHealthy = (data.status || '').toLowerCase() === 'healthy'
+
     return {
-      status: 'healthy',
-      environment: response.data.environment || 'unknown',
-      privacy: response.data.privacy_mode || 'stateless',
+      healthy: isHealthy,
+      status: data.status || 'unknown',
+      environment: data.environment || 'unknown',
+      privacy: data.privacy || data.privacy_mode || 'stateless',
+      memory: {
+        limitMb: data.memory_limit_mb ?? null,
+        currentMb: data.current_memory_mb ?? null
+      },
+      sessions: {
+        active: data.active_sessions ?? null,
+        total: data.total_sessions ?? null
+      },
       timestamp: new Date().toISOString()
     }
   } catch (error) {
