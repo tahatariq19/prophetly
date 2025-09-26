@@ -41,11 +41,14 @@ app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(MemoryMonitoringMiddleware, max_memory_mb=512)
 
 # Security middleware
+trusted_hosts = list(settings.ALLOWED_HOSTS)
+
+if settings.DEBUG and "testserver" not in trusted_hosts:
+    trusted_hosts.append("testserver")
+
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.render.com", "testserver"]
-    if settings.DEBUG
-    else ["*.render.com"],
+    allowed_hosts=trusted_hosts,
 )
 
 # CORS middleware for frontend communication
@@ -84,9 +87,10 @@ else:
 @app.get("/")
 async def root():
     return {
-        "message": "Prophet Web Interface API",
+        "message": "Prophet Web Interface API - Privacy First",
         "version": "1.0.0",
         "architecture": "Memory-based processing",
+        "privacy": "stateless",
     }
 
 
@@ -102,4 +106,6 @@ async def health_check():
         "current_memory_mb": memory_usage["rss_mb"],
         "active_sessions": session_stats.active_sessions,
         "total_sessions": session_stats.total_sessions,
+        "privacy": "stateless",
+        "data_processing": "memory-only",
     }

@@ -1,6 +1,7 @@
 """Configuration settings for Prophet Web Interface."""
 
 import os
+from typing import List
 
 
 class Settings:
@@ -21,7 +22,24 @@ class Settings:
 
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
-    ALLOWED_ORIGINS: list = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+    ALLOWED_ORIGINS: list = [
+        origin.strip()
+        for origin in os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://localhost:3000,https://localhost:3000,https://*.app.github.dev",
+        ).split(",")
+        if origin.strip()
+    ]
+
+    # Host validation
+    ALLOWED_HOSTS: List[str] = [
+        host.strip()
+        for host in os.getenv(
+            "ALLOWED_HOSTS",
+            "localhost,127.0.0.1,backend,frontend,0.0.0.0,*.github.dev,*.app.github.dev,*.render.com,testserver",
+        ).split(",")
+        if host.strip()
+    ]
 
     # File upload limits
     MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", "50"))
