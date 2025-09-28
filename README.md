@@ -20,11 +20,9 @@ This application is built with a memory-first design approach.
 - User preferences are stored only in the browser's local storage.
 - No user data is written to server logs.
 
-## Architecture
-
 - **Frontend**: Vue.js single-page application.
 - **Backend**: Python FastAPI service with stateless, in-memory processing.
-- **Deployment**: Configured for easy deployment on the Render platform.
+- **Deployment**: Configured for containerized deployment using Docker.
 
 ## Local Development
 
@@ -96,13 +94,11 @@ npm test
 
 ## Deployment
 
-This project is configured for seamless deployment to the [Render](https://render.com) platform using the [`render.yaml`](render.yaml:0) file.
+The application is containerized with Docker and can be deployed to any platform supporting Docker containers.
 
-1. **Connect Your Repository to Render**: In the Render dashboard, create a new "Blueprint" and select your repository.
-2. **Deploy**: Render will automatically detect [`render.yaml`](render.yaml:0) and provision the frontend and backend services.
-3. **Automatic Updates**: By default, Render will automatically redeploy your application whenever you push changes to your main branch.
+For production deployment, use `docker-compose.prod.yml` with appropriate environment variables.
 
-The `render.yaml` file handles all the necessary environment variables and build commands for a production environment.
+See the Docker section below for build and run instructions.
 
 ## Documentation
 
