@@ -1,3 +1,5 @@
+# API Documentation
+
 All operations happen in volatile memory during the request lifecycle and are automatically cleaned up upon completion.
 
 ## Core Architectural Principles
@@ -21,12 +23,14 @@ All operations happen in volatile memory during the request lifecycle and are au
 ## API Endpoints
 
 ### Base URL
+
 ```
 Production: https://prophet-web-api.render.com
 Development: http://localhost:8000
 ```
 
 ### Authentication
+
 No authentication required - the session-based design manages data isolation without user accounts.
 
 ---
@@ -34,9 +38,11 @@ No authentication required - the session-based design manages data isolation wit
 ## Data Upload and Processing
 
 ### POST /api/upload
+
 Upload and process CSV data entirely in memory.
 
 **Memory Management:**
+
 - File processed directly from request stream
 - No temporary files created on disk
 - Data validated and parsed in RAM only
@@ -57,6 +63,7 @@ Content-Type: multipart/form-data
 ```
 
 **Response:**
+
 ```json
 {
   "session_id": "temp-session-uuid",
@@ -81,6 +88,7 @@ Content-Type: multipart/form-data
 ```
 
 **Session Management:**
+
 - Session data expires automatically after 2 hours
 - Explicit cleanup on session termination
 - Memory usage monitoring and limits
@@ -91,9 +99,11 @@ Content-Type: multipart/form-data
 ## Data Processing
 
 ### POST /api/process
+
 Apply data cleaning and transformations in memory.
 
 **Memory-Based Processing:**
+
 - No intermediate files or caches
 - All transformations applied to in-memory data
 - Original data discarded after transformation
@@ -122,6 +132,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -141,9 +152,11 @@ Content-Type: application/json
 ## Forecasting
 
 ### POST /api/forecast
+
 Generate Prophet forecasts with complete memory isolation.
 
 **Memory-Based Forecasting:**
+
 - Prophet model created and trained in memory only
 - No model persistence or caching
 - Forecast results generated in RAM
@@ -175,6 +188,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "forecast_id": "temp-forecast-uuid",
@@ -200,11 +214,13 @@ Content-Type: application/json
 ```
 
 **Async Processing for Large Datasets:**
+
 ```http
 POST /api/forecast?async=true
 ```
 
 Returns immediately with:
+
 ```json
 {
   "task_id": "temp-task-uuid",
@@ -214,6 +230,7 @@ Returns immediately with:
 ```
 
 Check status with:
+
 ```http
 GET /api/forecast/status/{task_id}
 ```
@@ -223,9 +240,11 @@ GET /api/forecast/status/{task_id}
 ## Model Validation
 
 ### POST /api/validate
+
 Perform cross-validation with memory-only operations.
 
 **Memory-Based Validation:**
+
 - Multiple model training iterations in memory
 - No validation result caching
 - Performance metrics calculated on-demand
@@ -248,6 +267,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "validation_results": {
@@ -272,9 +292,11 @@ Content-Type: application/json
 ## Data Export
 
 ### GET /api/export/{format}
+
 Export results in various formats with immediate generation.
 
 **Memory-Based Export:**
+
 - Files generated in memory and streamed directly
 - No temporary files on server
 - Immediate cleanup after download
@@ -286,6 +308,7 @@ GET /api/export/json?session_id=temp-session-uuid&type=full_report
 ```
 
 **Supported Formats:**
+
 - `csv`: Forecast data with confidence intervals
 - `json`: Complete results with metadata
 - `png`: Chart images (generated on-demand)
@@ -296,6 +319,7 @@ GET /api/export/json?session_id=temp-session-uuid&type=full_report
 ## System Health and Monitoring
 
 ### GET /api/health
+
 System health check with operational status.
 
 ```http
@@ -303,6 +327,7 @@ GET /api/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -317,6 +342,7 @@ GET /api/health
 ```
 
 ### GET /api/metrics
+
 System performance metrics (no user data).
 
 ```http
@@ -324,6 +350,7 @@ GET /api/metrics
 ```
 
 **Response:**
+
 ```json
 {
   "requests_per_minute": 45,
@@ -338,6 +365,7 @@ GET /api/metrics
 ## Error Handling
 
 ### Error Response Format
+
 All errors follow a consistent format with clear error messages.
 
 ```json
@@ -367,11 +395,13 @@ All errors follow a consistent format with clear error messages.
 ## Rate Limiting and Security
 
 ### Rate Limits
+
 - **Upload**: 10 files per hour per IP
 - **Forecast**: 20 requests per hour per IP
 - **Export**: 50 downloads per hour per IP
 
 ### Security Headers
+
 All responses include standard security headers:
 
 ```http
@@ -514,7 +544,6 @@ class ProphetAPIClient:
 ```
 
 ---
-
 
 ## Development and Testing
 
