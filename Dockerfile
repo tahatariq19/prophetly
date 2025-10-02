@@ -2,7 +2,7 @@
 # Optimized for Render deployment as a single service
 
 # Stage 1: Build Frontend
-FROM node:24-alpine AS frontend-build
+FROM node:22-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
@@ -47,6 +47,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     nginx \
     supervisor \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies from backend-base
@@ -77,8 +78,8 @@ RUN useradd -m -u 1000 appuser && \
     touch /var/run/nginx.pid && \
     chown appuser:appuser /var/run/nginx.pid
 
-# Create nginx configuration
-RUN cat > /etc/nginx/nginx.conf <<'EOF'
+# Create nginx configuration template
+RUN cat > /etc/nginx/nginx.conf.template <<'EOF'
 user appuser;
 worker_processes auto;
 pid /var/run/nginx.pid;
@@ -108,7 +109,7 @@ http {
     gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/rss+xml font/truetype font/opentype application/vnd.ms-fontobject image/svg+xml;
 
     server {
-        listen 8080;
+        listen ${PORT};
         server_name _;
         root /usr/share/nginx/html;
         index index.html;
@@ -185,12 +186,29 @@ ENV PYTHONUNBUFFERED=1 \
     ENVIRONMENT=production \
     LOG_LEVEL=INFO
 
-# Expose port (Render will map this to PORT env variable)
-EXPOSE 8080
+# Create startup script
+RUN cat > /app/start.sh <<'EOF'
+#!/bin/bash
+set -e
 
-# Health check
+# Use PORT environment variable from Render, default to 10000
+export PORT=${PORT:-10000}
+
+# Generate nginx config from template
+envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
+# Start supervisor
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+EOF
+
+RUN chmod +x /app/start.sh && chown appuser:appuser /app/start.sh
+
+# Expose port (Render will set PORT env variable)
+EXPOSE ${PORT:-10000}
+
+# Health check - use PORT env variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
-# Start supervisor to manage both services
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start services via startup script
+CMD ["/app/start.sh"]
