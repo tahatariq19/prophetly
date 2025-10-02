@@ -17,10 +17,10 @@ api.interceptors.request.use(
     config.headers['X-Privacy-Mode'] = 'stateless'
     config.headers['X-No-Logging'] = 'true'
     config.headers['X-Session-Only'] = 'true'
-    
+
     // Add timestamp for request tracking (not user tracking)
     config.headers['X-Request-Time'] = new Date().toISOString()
-    
+
     return config
   },
   (error) => {
@@ -64,13 +64,13 @@ api.interceptors.response.use(
 
     // Add privacy assurance to all errors
     error.privacyMessage = 'Your data was processed in memory only and has been automatically discarded.'
-    
+
     console.error('API Error:', {
       status: error.response?.status,
       message: error.message,
       privacy: error.privacyMessage
     })
-    
+
     return Promise.reject(error)
   }
 )
@@ -81,7 +81,21 @@ export default api
 export const checkHealth = async () => {
   try {
     const response = await api.get('/health')
-    const data = response.data || {}
+    const data = response.data || response || {}
+
+    // Handle both JSON response and plain text "healthy" response
+    if (typeof data === 'string') {
+      return {
+        healthy: data.toLowerCase().includes('healthy'),
+        status: 'healthy',
+        environment: 'production',
+        privacy: 'stateless',
+        memory: { limitMb: null, currentMb: null },
+        sessions: { active: null, total: null },
+        timestamp: new Date().toISOString()
+      }
+    }
+
     const isHealthy = (data.status || '').toLowerCase() === 'healthy'
 
     return {
@@ -100,6 +114,7 @@ export const checkHealth = async () => {
       timestamp: new Date().toISOString()
     }
   } catch (error) {
+    console.error('Health check error details:', error)
     throw new Error(`API health check failed: ${error.message}`)
   }
 }
@@ -108,7 +123,7 @@ export const checkHealth = async () => {
 export const uploadFile = async (file, onProgress = null) => {
   const formData = new FormData()
   formData.append('file', file)
-  
+
   const config = {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -123,7 +138,7 @@ export const uploadFile = async (file, onProgress = null) => {
       }
     }
   }
-  
+
   try {
     const response = await api.post('/upload/csv', formData, config)
     return response.data

@@ -530,8 +530,10 @@ export default {
     const checkApiHealth = async () => {
       try {
         const health = await checkHealth()
+        console.log('Health check response:', health)
         appStore.setApiStatus(health)
       } catch (error) {
+        console.error('Health check failed:', error)
         appStore.setApiStatus({
           healthy: false,
           environment: null,
