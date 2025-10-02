@@ -409,6 +409,11 @@ export default {
 
         const response = await apiUploadFile(selectedFile.value, onProgress)
 
+        // Check if response is valid
+        if (!response || !response.success) {
+          throw new Error(response?.message || 'Upload failed - invalid response from server')
+        }
+
         // Processing stage
         uploadStatus.value = {
           stage: 'Processing in memory...',
@@ -426,17 +431,21 @@ export default {
           message: 'Data processed successfully and securely'
         }
 
-        // Store data in session
+        // Store data in session - handle both snake_case and camelCase
+        const dataPreview = response.data_preview || response.dataPreview
+        const fileInfo = response.file_info || response.fileInfo
+        const dataQuality = response.data_quality || response.dataQuality
+        
         const enhancedPreview = {
-          columns: response.data_preview?.columns || [],
-          sampleRows: response.data_preview?.rows || [],
-          totalRows: response.data_preview?.total_rows || 0,
-          columnMapping: response.column_mapping || {},
+          columns: dataPreview?.columns || [],
+          sampleRows: dataPreview?.rows || [],
+          totalRows: dataPreview?.total_rows || dataPreview?.totalRows || 0,
+          columnMapping: response.column_mapping || response.columnMapping || {},
           stats: {
-            completeness: response.data_quality?.completeness || 0,
-            missingValues: response.data_quality?.missing_values || 0,
-            totalRows: response.file_info?.rows || 0,
-            totalColumns: response.file_info?.columns || 0
+            completeness: dataQuality?.completeness || 0,
+            missingValues: dataQuality?.missing_values || dataQuality?.missingValues || 0,
+            totalRows: fileInfo?.rows || 0,
+            totalColumns: fileInfo?.columns || 0
           }
         }
 

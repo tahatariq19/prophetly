@@ -338,6 +338,14 @@ export default {
 
         const response = await apiUploadFile(selectedFile.value, onProgress)
 
+        // Log response for debugging
+        console.log('Upload response:', response)
+
+        // Check if response is valid
+        if (!response || !response.success) {
+          throw new Error(response?.message || 'Upload failed - invalid response from server')
+        }
+
         // Processing stage
         uploadStatus.value = {
           stage: 'Processing data...',
@@ -356,18 +364,29 @@ export default {
         }
 
         // Store data in session with enhanced preview data
+        // Backend returns snake_case, so we need to handle both cases
+        const dataPreview = response.data_preview || response.dataPreview
+        const fileInfo = response.file_info || response.fileInfo
+        const columnInfo = response.column_info || response.columnInfo
+        const dataQuality = response.data_quality || response.dataQuality
+        
+        if (!dataPreview || !fileInfo) {
+          console.error('Missing required data in response:', { dataPreview, fileInfo, response })
+          throw new Error('Invalid response structure from server')
+        }
+        
         const enhancedPreview = {
-          columns: response.data_preview?.columns || [],
-          sampleRows: response.data_preview?.rows || [],
-          totalRows: response.data_preview?.total_rows || 0,
-          columnInfo: response.column_info || {},
+          columns: dataPreview?.columns || [],
+          sampleRows: dataPreview?.rows || [],
+          totalRows: dataPreview?.total_rows || dataPreview?.totalRows || 0,
+          columnInfo: columnInfo || {},
           stats: {
-            total_rows: response.file_info?.rows || 0,
-            total_columns: response.file_info?.columns || 0,
-            memory_usage_mb: response.file_info?.memory_usage_bytes ? response.file_info.memory_usage_bytes / (1024 * 1024) : 0,
+            total_rows: fileInfo?.rows || 0,
+            total_columns: fileInfo?.columns || 0,
+            memory_usage_mb: fileInfo?.memory_usage_bytes ? fileInfo.memory_usage_bytes / (1024 * 1024) : 0,
             completely_empty_rows: 0 // Will be calculated from quality assessment
           },
-          quality: response.data_quality || {}
+          quality: dataQuality || {}
         }
 
         sessionStore.setUploadedData(response, enhancedPreview)
