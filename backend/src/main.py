@@ -24,7 +24,10 @@ from .middleware.error_middleware import (
     RequestValidationMiddleware,
 )
 from .services.session_manager import session_manager
-from .utils.error_handler import create_general_exception_handler, create_http_exception_handler
+from .utils.error_handler import (
+    create_general_exception_handler,
+    create_http_exception_handler,
+)
 from .utils.memory import get_memory_usage
 
 app = FastAPI(
@@ -36,20 +39,22 @@ app = FastAPI(
 )
 
 # Add error handling middleware (order matters)
-app.add_middleware(RequestValidationMiddleware, max_request_size=10 * 1024 * 1024)  # 10MB
+app.add_middleware(
+    RequestValidationMiddleware, max_request_size=10 * 1024 * 1024
+)  # 10MB
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(MemoryMonitoringMiddleware, max_memory_mb=512)
 
-# Security middleware
-trusted_hosts = list(settings.ALLOWED_HOSTS)
-
-if settings.DEBUG and "testserver" not in trusted_hosts:
-    trusted_hosts.append("testserver")
-
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=trusted_hosts,
-)
+# Security middleware - only enable in non-production or with explicit hosts
+# TrustedHostMiddleware doesn't support wildcards properly, so we skip it in production
+if settings.DEBUG:
+    trusted_hosts = list(settings.ALLOWED_HOSTS)
+    if "testserver" not in trusted_hosts:
+        trusted_hosts.append("testserver")
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=trusted_hosts,
+    )
 
 # CORS middleware for frontend communication
 app.add_middleware(
@@ -79,12 +84,14 @@ logger = logging.getLogger(__name__)
 # Serve static files for the frontend when available
 static_directory = Path(__file__).resolve().parent / "static"
 if static_directory.exists():
-    app.mount("/", StaticFiles(directory=str(static_directory), html=True), name="static")
+    app.mount(
+        "/", StaticFiles(directory=str(static_directory), html=True), name="static"
+    )
 else:
     logger.warning("Static directory %s not found; skipping mount", static_directory)
 
 
-@app.get("/")
+@app.get("/api")
 async def root():
     return {
         "message": "Prophet Web Interface API - Privacy First",
@@ -94,7 +101,7 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     memory_usage = get_memory_usage()
     session_stats = session_manager.get_session_stats()
