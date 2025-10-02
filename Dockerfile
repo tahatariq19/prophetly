@@ -185,7 +185,7 @@ stderr_logfile_maxbytes=0
 environment=MPLCONFIGDIR="/tmp/matplotlib"
 
 [program:nginx]
-command=nginx -g 'daemon off;'
+command=nginx -c /tmp/nginx.conf -g 'daemon off;'
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -211,8 +211,8 @@ set -e
 # Use PORT environment variable from Render, default to 10000
 export PORT=${PORT:-10000}
 
-# Generate nginx config from template
-envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+# Generate nginx config from template in a writable location
+envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /tmp/nginx.conf
 
 # Start supervisor
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
