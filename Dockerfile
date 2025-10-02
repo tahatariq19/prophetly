@@ -65,7 +65,13 @@ RUN mkdir -p /var/log/supervisor && \
     mkdir -p /var/log/nginx && \
     mkdir -p /var/run && \
     mkdir -p /var/cache/nginx && \
-    mkdir -p /etc/nginx/conf.d
+    mkdir -p /var/lib/nginx/body && \
+    mkdir -p /var/lib/nginx/proxy && \
+    mkdir -p /var/lib/nginx/fastcgi && \
+    mkdir -p /var/lib/nginx/uwsgi && \
+    mkdir -p /var/lib/nginx/scgi && \
+    mkdir -p /etc/nginx/conf.d && \
+    mkdir -p /tmp/matplotlib
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
@@ -75,12 +81,13 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /var/log/supervisor && \
     chown -R appuser:appuser /var/run && \
     chown -R appuser:appuser /var/cache/nginx && \
+    chown -R appuser:appuser /var/lib/nginx && \
+    chown -R appuser:appuser /tmp/matplotlib && \
     touch /var/run/nginx.pid && \
     chown appuser:appuser /var/run/nginx.pid
 
 # Create nginx configuration template
 RUN cat > /etc/nginx/nginx.conf.template <<'EOF'
-user appuser;
 worker_processes auto;
 pid /var/run/nginx.pid;
 
@@ -101,6 +108,13 @@ http {
     keepalive_timeout 65;
     types_hash_max_size 2048;
     client_max_body_size 50M;
+
+    # Use writable directories for nginx temp files
+    client_body_temp_path /var/lib/nginx/body;
+    proxy_temp_path /var/lib/nginx/proxy;
+    fastcgi_temp_path /var/lib/nginx/fastcgi;
+    uwsgi_temp_path /var/lib/nginx/uwsgi;
+    scgi_temp_path /var/lib/nginx/scgi;
 
     gzip on;
     gzip_vary on;
@@ -155,24 +169,23 @@ EOF
 RUN cat > /etc/supervisor/conf.d/supervisord.conf <<'EOF'
 [supervisord]
 nodaemon=true
-user=root
+user=appuser
 logfile=/var/log/supervisor/supervisord.log
 pidfile=/var/run/supervisord.pid
 
 [program:backend]
 command=uvicorn src.main:app --host 127.0.0.1 --port 8000 --workers 2
 directory=/app
-user=appuser
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
 stdout_logfile_maxbytes=0
 stderr_logfile=/dev/stderr
 stderr_logfile_maxbytes=0
+environment=MPLCONFIGDIR="/tmp/matplotlib"
 
 [program:nginx]
 command=nginx -g 'daemon off;'
-user=appuser
 autostart=true
 autorestart=true
 stdout_logfile=/dev/stdout
@@ -184,7 +197,11 @@ EOF
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     ENVIRONMENT=production \
-    LOG_LEVEL=INFO
+    LOG_LEVEL=INFO \
+    MPLCONFIGDIR=/tmp/matplotlib
+
+# Switch to non-root user
+USER appuser
 
 # Create startup script
 RUN cat > /app/start.sh <<'EOF'
