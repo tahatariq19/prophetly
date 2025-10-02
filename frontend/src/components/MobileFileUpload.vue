@@ -435,12 +435,31 @@ export default {
         const dataPreview = response.data_preview || response.dataPreview
         const fileInfo = response.file_info || response.fileInfo
         const dataQuality = response.data_quality || response.dataQuality
+        const columnInfo = response.column_info || response.columnInfo
+        
+        // Detect date and value columns from column_info
+        let dateColumn = null
+        let valueColumn = null
+        
+        if (columnInfo) {
+          for (const [colName, colData] of Object.entries(columnInfo)) {
+            if (colData.is_potential_date && !dateColumn) {
+              dateColumn = colName
+            }
+            if (colData.is_potential_value && !valueColumn) {
+              valueColumn = colName
+            }
+          }
+        }
         
         const enhancedPreview = {
           columns: dataPreview?.columns || [],
           sampleRows: dataPreview?.rows || [],
           totalRows: dataPreview?.total_rows || dataPreview?.totalRows || 0,
-          columnMapping: response.column_mapping || response.columnMapping || {},
+          columnMapping: {
+            dateColumn: dateColumn,
+            valueColumn: valueColumn
+          },
           stats: {
             completeness: dataQuality?.completeness || 0,
             missingValues: dataQuality?.missing_values || dataQuality?.missingValues || 0,

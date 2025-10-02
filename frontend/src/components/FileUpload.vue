@@ -375,11 +375,30 @@ export default {
           throw new Error('Invalid response structure from server')
         }
         
+        // Detect date and value columns from column_info
+        let dateColumn = null
+        let valueColumn = null
+        
+        if (columnInfo) {
+          for (const [colName, colData] of Object.entries(columnInfo)) {
+            if (colData.is_potential_date && !dateColumn) {
+              dateColumn = colName
+            }
+            if (colData.is_potential_value && !valueColumn) {
+              valueColumn = colName
+            }
+          }
+        }
+        
         const enhancedPreview = {
           columns: dataPreview?.columns || [],
           sampleRows: dataPreview?.rows || [],
           totalRows: dataPreview?.total_rows || dataPreview?.totalRows || 0,
           columnInfo: columnInfo || {},
+          columnMapping: {
+            dateColumn: dateColumn,
+            valueColumn: valueColumn
+          },
           stats: {
             total_rows: fileInfo?.rows || 0,
             total_columns: fileInfo?.columns || 0,
