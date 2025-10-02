@@ -123,7 +123,8 @@ http {
     gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss application/rss+xml font/truetype font/opentype application/vnd.ms-fontobject image/svg+xml;
 
     server {
-        listen ${PORT};
+        listen ${PORT} default_server;
+        listen [::]:${PORT} default_server;
         server_name _;
         root /usr/share/nginx/html;
         index index.html;
@@ -219,8 +220,12 @@ set -e
 # Use PORT environment variable from Render, default to 10000
 export PORT=${PORT:-10000}
 
+echo "Starting services on port $PORT"
+
 # Generate nginx config from template in a writable location
 envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /tmp/nginx.conf
+
+echo "Nginx config generated, starting supervisor..."
 
 # Start supervisor
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
