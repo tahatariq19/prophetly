@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: prophetly
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_SESSION_AGE
+        value: 7200
+      - key: MAX_MEMORY_MB
+        value: 512
+      - key: ALLOWED_HOSTS
+        value: localhost,127.0.0.1,*.render.com,*.onrender.com
+      - key: ALLOWED_ORIGINS
+        value: https://*.render.com,https://*.onrender.com

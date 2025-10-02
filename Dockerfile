@@ -161,6 +161,14 @@ http {
             return 200 "healthy\n";
             add_header Content-Type text/plain;
         }
+        
+        location = /api/health {
+            proxy_pass http://127.0.0.1:8000/api/health;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_connect_timeout 5s;
+            proxy_read_timeout 5s;
+        }
     }
 }
 EOF
@@ -221,11 +229,12 @@ EOF
 RUN chmod +x /app/start.sh && chown appuser:appuser /app/start.sh
 
 # Expose port (Render will set PORT env variable)
-EXPOSE ${PORT:-10000}
+EXPOSE 10000
 
-# Health check - use PORT env variable
+# Health check - Render will use its own health checks
+# We'll respond on /health endpoint via nginx
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
+    CMD curl -f http://localhost:10000/health || exit 1
 
 # Start services via startup script
 CMD ["/app/start.sh"]
