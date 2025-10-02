@@ -76,28 +76,33 @@ async def upload_csv_file(
             # Store processed data in session
             session = session_manager.get_session(session_id)
             if session is None:
-                raise HTTPException(status_code=500, detail="Session lost during processing")
+                raise HTTPException(
+                    status_code=500, detail="Session lost during processing"
+                )
 
-            # Convert data dict back to DataFrame for quality assessment
+            # Convert data dict back to DataFrame for quality assessment and storage
             import pandas as pd
 
             df = pd.DataFrame(processing_result["data"]["data"])
             df.columns = processing_result["data"]["columns"]
 
             # Perform data quality assessment
-            logger.info("Performing data quality assessment for session: %s", session_id)
+            logger.info(
+                "Performing data quality assessment for session: %s", session_id
+            )
             quality_assessment = data_quality_service.assess_data_quality(
                 df, processing_result["column_info"]
             )
 
             # Store the processed data and quality assessment
+            # Store as DataFrame for forecast generation (key must match what forecast endpoint expects)
+            session.store_dataframe("uploaded_data", df)
+
+            # Also store the dict version and metadata for other uses
             session.store_data("uploaded_file_data", processing_result["data"])
             session.store_data("file_metadata", processing_result["metadata"])
             session.store_data("column_info", processing_result["column_info"])
             session.store_data("data_quality_assessment", quality_assessment)
-
-            # Clean up DataFrame from memory
-            del df
 
             # Create data preview (first 10 rows)
             data_preview = None
@@ -134,7 +139,8 @@ async def upload_csv_file(
         except Exception as e:
             logger.error("Unexpected error during file upload: %s", str(e))
             raise HTTPException(
-                status_code=500, detail="An unexpected error occurred during file processing"
+                status_code=500,
+                detail="An unexpected error occurred during file processing",
             ) from e
 
 
@@ -154,7 +160,9 @@ async def get_file_info(session_id: str) -> Dict[str, Any]:
         column_info = session.get_data("column_info")
 
         if file_metadata is None:
-            raise HTTPException(status_code=404, detail="No file uploaded in this session")
+            raise HTTPException(
+                status_code=404, detail="No file uploaded in this session"
+            )
 
         return {
             "session_id": session_id,
@@ -184,7 +192,8 @@ async def get_data_quality_assessment(session_id: str) -> Dict[str, Any]:
         quality_assessment = session.get_data("data_quality_assessment")
         if quality_assessment is None:
             raise HTTPException(
-                status_code=404, detail="No data quality assessment found in this session"
+                status_code=404,
+                detail="No data quality assessment found in this session",
             )
 
         return {
@@ -194,7 +203,9 @@ async def get_data_quality_assessment(session_id: str) -> Dict[str, Any]:
 
 
 @router.get("/session/{session_id}/data-preview")
-async def get_data_preview(session_id: str, rows: int = 10, offset: int = 0) -> Dict[str, Any]:
+async def get_data_preview(
+    session_id: str, rows: int = 10, offset: int = 0
+) -> Dict[str, Any]:
     """Get a preview of the uploaded data.
 
     Args:
@@ -209,11 +220,17 @@ async def get_data_preview(session_id: str, rows: int = 10, offset: int = 0) -> 
     with MemoryTracker("get_data_preview"):
         # Validate parameters
         if rows > 100:
-            raise HTTPException(status_code=400, detail="Maximum 100 rows allowed per request")
+            raise HTTPException(
+                status_code=400, detail="Maximum 100 rows allowed per request"
+            )
         if rows < 1:
-            raise HTTPException(status_code=400, detail="Rows parameter must be positive")
+            raise HTTPException(
+                status_code=400, detail="Rows parameter must be positive"
+            )
         if offset < 0:
-            raise HTTPException(status_code=400, detail="Offset parameter must be non-negative")
+            raise HTTPException(
+                status_code=400, detail="Offset parameter must be non-negative"
+            )
 
         session = session_manager.get_session(session_id)
         if session is None:
@@ -274,7 +291,11 @@ async def clear_file_data(session_id: str) -> Dict[str, Any]:
                 removed_items.append(key)
 
         if not removed_items:
-            return {"success": True, "message": "No file data found to clear", "removed_items": []}
+            return {
+                "success": True,
+                "message": "No file data found to clear",
+                "removed_items": [],
+            }
 
         logger.info("Cleared file data from session %s: %s", session_id, removed_items)
 
