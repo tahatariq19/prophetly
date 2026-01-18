@@ -8,14 +8,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration for Vercel frontend
+# CORS configuration
+import os
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://*.vercel.app",
+]
+
+# Add custom origins from env
+if os.getenv("ALLOWED_ORIGINS"):
+    origins.extend(os.getenv("ALLOWED_ORIGINS").split(","))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite dev server
-        "http://localhost:3000",
-        "https://*.vercel.app",   # Vercel deployments
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
