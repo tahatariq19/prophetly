@@ -13,7 +13,6 @@ import os
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://*.vercel.app",
 ]
 
 # Add custom origins from env
@@ -23,6 +22,7 @@ if os.getenv("ALLOWED_ORIGINS"):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
