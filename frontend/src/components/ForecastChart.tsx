@@ -23,22 +23,32 @@ interface ForecastChartProps {
 export function ForecastChart({ historicalData = [] }: ForecastChartProps) {
     const { forecast } = useResultsStore();
 
+    // Optimization: Separate historical data processing to avoid re-calculating when only forecast changes
+    const historicalMap = useMemo(() => {
+        const map = new Map<string, number>();
+        for (const d of historicalData) {
+            // Optimization: slice(0, 10) is faster than split(' ')[0] and creates fewer objects
+            map.set(d.ds.slice(0, 10), d.y);
+        }
+        return map;
+    }, [historicalData]);
+
     const chartData = useMemo(() => {
         if (!forecast) return [];
 
-        const historical = new Map(
-            historicalData.map((d) => [d.ds.split(' ')[0], d.y])
-        );
-
-        return forecast.forecast.map((point) => ({
-            ds: point.ds.split(' ')[0],
-            actual: historical.get(point.ds.split(' ')[0]) ?? null,
-            yhat: point.yhat,
-            yhat_lower: point.yhat_lower,
-            yhat_upper: point.yhat_upper,
-            trend: point.trend,
-        }));
-    }, [forecast, historicalData]);
+        return forecast.forecast.map((point) => {
+            // Optimization: reuse processed string
+            const dateStr = point.ds.slice(0, 10);
+            return {
+                ds: dateStr,
+                actual: historicalMap.get(dateStr) ?? null,
+                yhat: point.yhat,
+                yhat_lower: point.yhat_lower,
+                yhat_upper: point.yhat_upper,
+                trend: point.trend,
+            };
+        });
+    }, [forecast, historicalMap]);
 
     const componentData = useMemo(() => {
         if (!forecast?.components) return {};
@@ -48,7 +58,7 @@ export function ForecastChart({ historicalData = [] }: ForecastChartProps) {
         Object.entries(forecast.components).forEach(([name, data]) => {
             if (name !== 'trend') {
                 result[name] = data.ds.map((ds, i) => ({
-                    ds: ds.split(' ')[0],
+                    ds: ds.slice(0, 10), // Optimization: faster date string processing
                     value: data.values[i],
                 }));
             }
