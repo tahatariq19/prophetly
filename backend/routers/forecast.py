@@ -1,4 +1,5 @@
 """Forecast API endpoints."""
+import logging
 from fastapi import APIRouter, HTTPException
 from models.schemas import (
     ForecastRequest,
@@ -13,6 +14,7 @@ from services.prophet_service import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/forecast", response_model=ForecastResponse)
@@ -33,6 +35,15 @@ async def create_forecast(request: ForecastRequest) -> ForecastResponse:
                 detail="MCMC samples limited to 100 on free tier."
             )
         
+        # Validate country holidays
+        if request.config.country_holidays:
+            available_countries = get_available_countries()
+            if request.config.country_holidays not in available_countries:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid country code: {request.config.country_holidays}. Use /api/countries to see available codes."
+                )
+
         result = generate_forecast(
             data=request.data,
             config=request.config,
@@ -45,7 +56,8 @@ async def create_forecast(request: ForecastRequest) -> ForecastResponse:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error generating forecast: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.post("/cross-validate", response_model=CrossValidationResponse)
@@ -59,6 +71,15 @@ async def cross_validate(request: CrossValidationRequest) -> CrossValidationResp
                 detail="Dataset too large. Maximum 50,000 rows allowed."
             )
         
+        # Validate country holidays
+        if request.config.country_holidays:
+            available_countries = get_available_countries()
+            if request.config.country_holidays not in available_countries:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid country code: {request.config.country_holidays}. Use /api/countries to see available codes."
+                )
+
         result = run_cross_validation(
             data=request.data,
             config=request.config,
@@ -71,7 +92,8 @@ async def cross_validate(request: CrossValidationRequest) -> CrossValidationResp
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error running cross-validation: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.get("/countries")
@@ -80,4 +102,5 @@ async def list_countries() -> list[str]:
     try:
         return get_available_countries()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error listing countries: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
