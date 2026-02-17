@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, ArrowRight, Settings2, BarChart3, UploadCloud, ChevronLeft } from 'lucide-react';
+import { Loader2, ArrowRight, Settings2, BarChart3, UploadCloud, ChevronLeft, RotateCcw } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { DataUpload } from '@/components/DataUpload';
 import { ModelConfig } from '@/components/ModelConfig';
@@ -9,36 +9,80 @@ import { Button } from '@/components/ui/button';
 import { useDataStore } from '@/stores/dataStore';
 import { useConfigStore } from '@/stores/configStore';
 import { useResultsStore } from '@/stores/resultsStore';
-import { generateForecast } from '@/services/api';
+import { generateForecast, isBackendWarmingUp } from '@/services/api';
 import type { ForecastRequest } from '@/types';
 
 function App() {
   const [step, setStep] = useState(1); // 1: Upload, 2: Config, 3: Results
+  const [lastForecastRequest, setLastForecastRequest] = useState<ForecastRequest | null>(null);
 
   const { rawData, isDataValid, clearData } = useDataStore();
   const { config, periods, freq } = useConfigStore();
-  const { isLoading, setLoading, setForecast, setError, forecast, clearResults } = useResultsStore();
+  const { isLoading, setLoading, setForecast, setError, forecast, clearResults, isWarmingUp, setWarmingUp, error } = useResultsStore();
 
   const handleRunForecast = async () => {
     if (!isDataValid()) return;
 
-    setLoading(true);
-    try {
-      const request: ForecastRequest = {
-        data: rawData,
-        config,
-        periods,
-        freq,
-      };
+    const request: ForecastRequest = {
+      data: rawData,
+      config,
+      periods,
+      freq,
+    };
 
+    setLastForecastRequest(request);
+    setLoading(true);
+    setWarmingUp(true);
+
+    try {
       const result = await generateForecast(request);
       setForecast(result);
       toast.success('Forecast generated successfully!');
       setStep(3);
+      setWarmingUp(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to generate forecast';
-      setError(message);
-      toast.error(message);
+      setWarmingUp(false);
+
+      if (isBackendWarmingUp(err)) {
+        // Backend is warming up - show timeout message
+        const timeoutMsg =
+          'Backend is warming up (first request can take a minute). Please wait or click Retry.';
+        setError(timeoutMsg);
+        toast.error(timeoutMsg);
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to generate forecast';
+        setError(message);
+        toast.error(message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRetryForecast = async () => {
+    if (!lastForecastRequest) return;
+    setLoading(true);
+    setWarmingUp(true);
+
+    try {
+      const result = await generateForecast(lastForecastRequest);
+      setForecast(result);
+      toast.success('Forecast generated successfully!');
+      setStep(3);
+      setWarmingUp(false);
+    } catch (err) {
+      setWarmingUp(false);
+
+      if (isBackendWarmingUp(err)) {
+        const timeoutMsg =
+          'Backend is still warming up. Please wait a bit more and try again.';
+        setError(timeoutMsg);
+        toast.error(timeoutMsg);
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to generate forecast';
+        setError(message);
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -75,6 +119,45 @@ function App() {
       </div>
 
       <main className="w-full max-w-6xl relative flex-1 flex flex-col">
+        {/* Warmup Banner - Shows when backend is starting up */}
+        {isWarmingUp && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 max-w-md w-96 text-center shadow-2xl">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-purple-500/20 rounded-full">
+                  <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Backend Warming Up</h3>
+              <p className="text-sm text-zinc-400 mb-6">
+                The forecast server is starting up. This usually takes 30-60 seconds on first request.
+              </p>
+              <p className="text-xs text-zinc-500">Please wait...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Timeout Error Banner - Shows when request times out */}
+        {error && isBackendWarmingUp(new Error()) && !isWarmingUp && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-amber-500 mt-0.5">⚠</div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-200">{error}</p>
+                <Button
+                  onClick={handleRetryForecast}
+                  disabled={isLoading}
+                  size="sm"
+                  className="mt-3 bg-amber-600 hover:bg-amber-500 text-white cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Upload */}
         {step === 1 && (
           <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto my-auto">

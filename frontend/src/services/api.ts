@@ -10,11 +10,25 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
     baseURL: API_URL,
-    timeout: 60000, // 60s timeout for free tier
+    timeout: 180000, // 180s timeout to allow Render cold start
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+// Helper to detect if error is a timeout or network error (backend warming up)
+export function isBackendWarmingUp(error: unknown): boolean {
+    if (axios.isAxiosError(error)) {
+        return (
+            error.code === 'ECONNABORTED' || // timeout
+            error.code === 'ECONNREFUSED' || // connection refused
+            error.code === 'ETIMEDOUT' || // timeout
+            error.message?.includes('timeout') ||
+            error.response?.status === 503 // Service Unavailable
+        );
+    }
+    return false;
+}
 
 export async function generateForecast(
     request: ForecastRequest
