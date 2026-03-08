@@ -22,7 +22,13 @@ A modern, dark-themed time series forecasting application using **Facebook Proph
    ```bash
    cd backend
    python -m venv .venv
-   .\.venv\Scripts\Activate
+
+   # Linux & MacOS
+   .venv/bin/activate
+
+   # Windows
+   .venv\Scripts\Activate.ps1
+   
    pip install -r requirements.txt
    uvicorn main:app --reload
    ```
