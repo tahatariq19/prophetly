@@ -227,7 +227,8 @@ export function DataUpload() {
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             className={`
-              p-16 text-center transition-all cursor-pointer rounded-2xl border-2 border-dashed
+              relative p-16 text-center transition-all cursor-pointer rounded-2xl border-2 border-dashed
+              focus-within:ring-2 focus-within:ring-purple-500 focus-within:ring-offset-2 focus-within:ring-offset-zinc-950
               ${isDragging
                     ? 'bg-purple-500/10 border-purple-500 scale-105'
                     : 'bg-zinc-900/0 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700'
@@ -238,8 +239,10 @@ export function DataUpload() {
                 type="file"
                 accept=".csv"
                 onChange={handleFileInput}
-                className="hidden"
+                className="sr-only"
                 id="csv-upload"
+                aria-invalid={!!parseError}
+                aria-describedby={parseError ? "upload-error" : undefined}
             />
             <label htmlFor="csv-upload" className="cursor-pointer block w-full h-full">
                 <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6 transition-transform group-hover:scale-110 border border-zinc-800">
@@ -254,7 +257,11 @@ export function DataUpload() {
             </label>
 
             {parseError && (
-                <p className="mt-6 text-sm text-red-400 bg-red-400/10 inline-block px-4 py-2 rounded-full border border-red-400/20">
+                <p
+                    id="upload-error"
+                    role="alert"
+                    className="mt-6 text-sm text-red-400 bg-red-400/10 inline-block px-4 py-2 rounded-full border border-red-400/20"
+                >
                     {parseError}
                 </p>
             )}
