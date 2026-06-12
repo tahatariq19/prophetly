@@ -15,7 +15,7 @@ function ErrorFallback({ error }: { error: unknown }) {
         </h1>
         <p className="text-zinc-400 mb-4">The application encountered an unexpected error and could not recover.</p>
         <pre className="bg-zinc-950 p-4 rounded-lg text-sm text-red-300 overflow-auto border border-zinc-800">
-          {error.message}
+          {error instanceof Error ? error.message : String(error)}
         </pre>
         <button
           onClick={() => window.location.href = '/'}
