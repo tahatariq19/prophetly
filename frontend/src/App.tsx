@@ -52,7 +52,7 @@ function App() {
         toast.success('Forecast generated successfully!');
         navigate('/results');
       });
-    } catch (err) {
+    } catch {
       // Error handled by useRetry hook
     }
   };
@@ -67,7 +67,7 @@ function App() {
         toast.success('Forecast generated successfully!');
         navigate('/results');
       });
-    } catch (err) {
+    } catch {
       // Error handled by useRetry hook
     }
   };

@@ -22,7 +22,7 @@ export function useRetry(mode: 'forecast' | 'cv' = 'forecast') {
             await apiCall();
             if (mode === 'forecast') store.setWarmingUp(false);
             else store.setCvWarmingUp(false);
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (mode === 'forecast') store.setWarmingUp(false);
             else store.setCvWarmingUp(false);
             

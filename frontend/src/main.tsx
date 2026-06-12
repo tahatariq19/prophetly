@@ -5,7 +5,8 @@ import { ErrorBoundary } from 'react-error-boundary'
 import './index.css'
 import App from './App.tsx'
 
-function ErrorFallback({ error }: { error: any }) {
+// eslint-disable-next-line react-refresh/only-export-components
+function ErrorFallback({ error }: { error: unknown }) {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-2xl bg-zinc-900 border border-red-500/30 rounded-2xl p-8 shadow-2xl">

@@ -39,7 +39,7 @@ export function CrossValidationPanel() {
 
     const updateSplit = (key: 'train' | 'period' | 'horizon', newVal: number) => {
         // Clamp value
-        let val = Math.max(1, Math.min(newVal, 99));
+        const val = Math.max(1, Math.min(newVal, 99));
 
         // Calculate delta and remaining
         const oldVal = split[key];
@@ -96,6 +96,7 @@ export function CrossValidationPanel() {
             const horizonDays = Math.floor(dataStats.totalDays * (split.horizon / 100));
             const periodDays = Math.floor(dataStats.totalDays * (split.period / 100));
 
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setInitial(`${initialDays} days`);
             setHorizon(`${horizonDays} days`);
             setPeriod(`${Math.max(1, periodDays)} days`);
@@ -123,7 +124,7 @@ export function CrossValidationPanel() {
                 setCvResults(result);
                 toast.success('Cross-validation completed!');
             });
-        } catch (err) {
+        } catch {
             // Error handled by useRetry
         }
     };
@@ -137,7 +138,7 @@ export function CrossValidationPanel() {
                 setCvResults(result);
                 toast.success('Cross-validation completed!');
             });
-        } catch (err) {
+        } catch {
             // Error handled by useRetry
         }
     };

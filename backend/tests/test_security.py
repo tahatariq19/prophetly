@@ -11,7 +11,10 @@ client = TestClient(app)
 def test_invalid_country_holidays():
     """Test that invalid country_holidays returns 400 Bad Request."""
     payload = {
-        "data": [{"ds": "2023-01-01", "y": 10}],
+        "data": [
+            {"ds": "2023-01-01", "y": 10},
+            {"ds": "2023-01-02", "y": 12}
+        ],
         "config": {"country_holidays": "INVALID_COUNTRY"},
         "periods": 10,
         "freq": "D"
@@ -26,7 +29,10 @@ def test_invalid_country_holidays():
 def test_internal_server_error_leakage():
     """Test that internal errors do not leak implementation details."""
     payload = {
-        "data": [{"ds": "2023-01-01", "y": 10}],
+        "data": [
+            {"ds": "2023-01-01", "y": 10},
+            {"ds": "2023-01-02", "y": 12}
+        ],
         "config": {},
         "periods": 10,
         "freq": "D"
