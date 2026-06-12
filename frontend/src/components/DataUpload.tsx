@@ -33,30 +33,6 @@ export function DataUpload() {
         clearData,
     } = useDataStore();
 
-    const parseCSV = useCallback((text: string): Record<string, string>[] => {
-        const lines = text.trim().split('\n');
-        if (lines.length < 2) throw new Error('CSV must have header and at least one data row');
-
-        const headers = lines[0].split(',').map((h) => h.trim().replace(/"/g, ''));
-        const data: Record<string, string>[] = [];
-
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            const values = line.split(',').map((v) => v.trim().replace(/"/g, ''));
-            if (values.length === headers.length) {
-                const row: Record<string, string> = {};
-                headers.forEach((h, j) => {
-                    row[h] = values[j];
-                });
-                data.push(row);
-            }
-        }
-
-        return data;
-    }, []);
-
     const handleFile = useCallback(
         (file: File) => {
             if (!file.name.endsWith('.csv')) {
@@ -64,33 +40,44 @@ export function DataUpload() {
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const text = e.target?.result as string;
-                    const data = parseCSV(text);
-                    if (data.length === 0) throw new Error('No data rows found');
-                    if (data.length > 50000) throw new Error('Maximum 50,000 rows allowed');
+            import('papaparse').then((Papa) => {
+                Papa.default.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        const data = results.data as Record<string, string>[];
+                        if (data.length === 0) {
+                            setParseError('No data rows found');
+                            return;
+                        }
+                        if (data.length > 50000) {
+                            setParseError('Maximum 50,000 rows allowed');
+                            return;
+                        }
 
-                    setRawCsvData(data);
-                    setAvailableColumns(Object.keys(data[0]));
-                    setParseError(null);
+                        setRawCsvData(data);
+                        
+                        // Extract columns from first row (PapaParse returns keys)
+                        const cols = Object.keys(data[0]);
+                        setAvailableColumns(cols);
+                        setParseError(null);
 
-                    const cols = Object.keys(data[0]).map((c) => c.toLowerCase());
-                    const dsIdx = cols.findIndex((c) => c === 'ds' || c === 'date' || c === 'datetime');
-                    const yIdx = cols.findIndex((c) => c === 'y' || c === 'value' || c === 'values');
+                        const lowerCols = cols.map(c => c.toLowerCase());
+                        const dsIdx = lowerCols.findIndex((c) => c === 'ds' || c === 'date' || c === 'datetime');
+                        const yIdx = lowerCols.findIndex((c) => c === 'y' || c === 'value' || c === 'values');
 
-                    if (dsIdx >= 0) setDsColumn(Object.keys(data[0])[dsIdx]);
-                    if (yIdx >= 0) setYColumn(Object.keys(data[0])[yIdx]);
+                        if (dsIdx >= 0) setDsColumn(cols[dsIdx]);
+                        if (yIdx >= 0) setYColumn(cols[yIdx]);
 
-                    setRawData([], file.name);
-                } catch (err) {
-                    setParseError(err instanceof Error ? err.message : 'Failed to parse CSV');
-                }
-            };
-            reader.readAsText(file);
+                        setRawData([], file.name);
+                    },
+                    error: (err) => {
+                        setParseError(err.message || 'Failed to parse CSV');
+                    }
+                });
+            });
         },
-        [parseCSV, setAvailableColumns, setDsColumn, setYColumn, setRawData]
+        [setAvailableColumns, setDsColumn, setYColumn, setRawData]
     );
 
     const handleDrop = useCallback(

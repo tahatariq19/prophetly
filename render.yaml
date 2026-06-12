@@ -1,0 +1,27 @@
+services:
+  # Backend API
+  - type: web
+    name: prophetly-backend
+    env: docker
+    region: ohio
+    plan: free
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
+
+  # Frontend static site
+  - type: web
+    name: prophetly-frontend
+    env: static
+    region: ohio
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: prophetly-backend
+          envVarKey: RENDER_EXTERNAL_URL

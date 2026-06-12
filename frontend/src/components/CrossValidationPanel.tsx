@@ -18,11 +18,11 @@ import { toast } from 'sonner';
 import { useResultsStore } from '@/stores/resultsStore';
 import { useConfigStore } from '@/stores/configStore';
 import { useDataStore } from '@/stores/dataStore';
-import { runCrossValidation, isBackendWarmingUp } from '@/services/api';
+import { runCrossValidation } from '@/services/api';
+import { useRetry } from '@/hooks/useRetry';
 import type { CrossValidationRequest } from '@/types';
 
 export function CrossValidationPanel() {
-    const [loading, setLoading] = useState(false);
     const [lastCvRequest, setLastCvRequest] = useState<CrossValidationRequest | null>(null);
 
     // Mode: 'auto' (Percentage) or 'manual' (Days)
@@ -75,7 +75,7 @@ export function CrossValidationPanel() {
     };
 
 
-    const { cvResults, setCvResults, cvError, setCvError, isCvWarmingUp, setCvWarmingUp } = useResultsStore();
+    const { cvResults, setCvResults, cvError, isCvWarmingUp, isLoading } = useResultsStore();
     const { config } = useConfigStore();
     const { rawData, isDataValid } = useDataStore();
 
@@ -102,6 +102,8 @@ export function CrossValidationPanel() {
         }
     }, [mode, split, dataStats]);
 
+    const { executeWithRetry, lastErrorWasTimeout } = useRetry('cv');
+
     const handleRunCV = async () => {
         if (!isDataValid()) return;
 
@@ -114,57 +116,29 @@ export function CrossValidationPanel() {
         };
 
         setLastCvRequest(request);
-        setLoading(true);
-        setCvWarmingUp(true);
 
         try {
-            const result = await runCrossValidation(request);
-            setCvResults(result);
-            toast.success('Cross-validation completed!');
-            setCvWarmingUp(false);
+            await executeWithRetry(async () => {
+                const result = await runCrossValidation(request);
+                setCvResults(result);
+                toast.success('Cross-validation completed!');
+            });
         } catch (err) {
-            setCvWarmingUp(false);
-
-            if (isBackendWarmingUp(err)) {
-                const timeoutMsg =
-                    'Backend is warming up. Please wait and try again.';
-                setCvError(timeoutMsg);
-                toast.error(timeoutMsg);
-            } else {
-                const message = err instanceof Error ? err.message : 'Cross-validation failed';
-                setCvError(message);
-                toast.error(message);
-            }
-        } finally {
-            setLoading(false);
+            // Error handled by useRetry
         }
     };
 
     const handleRetryCv = async () => {
         if (!lastCvRequest) return;
-        setLoading(true);
-        setCvWarmingUp(true);
 
         try {
-            const result = await runCrossValidation(lastCvRequest);
-            setCvResults(result);
-            toast.success('Cross-validation completed!');
-            setCvWarmingUp(false);
+            await executeWithRetry(async () => {
+                const result = await runCrossValidation(lastCvRequest);
+                setCvResults(result);
+                toast.success('Cross-validation completed!');
+            });
         } catch (err) {
-            setCvWarmingUp(false);
-
-            if (isBackendWarmingUp(err)) {
-                const timeoutMsg =
-                    'Backend is still warming up. Please wait and try again.';
-                setCvError(timeoutMsg);
-                toast.error(timeoutMsg);
-            } else {
-                const message = err instanceof Error ? err.message : 'Cross-validation failed';
-                setCvError(message);
-                toast.error(message);
-            }
-        } finally {
-            setLoading(false);
+            // Error handled by useRetry
         }
     };
 
@@ -190,7 +164,7 @@ export function CrossValidationPanel() {
             )}
 
             {/* Timeout Error Banner - Shows when request times out */}
-            {cvError && isBackendWarmingUp(new Error()) && !isCvWarmingUp && (
+            {cvError && lastErrorWasTimeout && !isCvWarmingUp && (
                 <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                     <div className="flex items-start gap-3">
                         <div className="text-amber-500 mt-0.5">⚠</div>
@@ -198,7 +172,7 @@ export function CrossValidationPanel() {
                             <p className="text-sm font-medium text-amber-200">{cvError}</p>
                             <Button
                                 onClick={handleRetryCv}
-                                disabled={loading}
+                                disabled={isLoading}
                                 size="sm"
                                 className="mt-3 bg-amber-600 hover:bg-amber-500 text-white cursor-pointer"
                             >
@@ -313,10 +287,10 @@ export function CrossValidationPanel() {
 
                 <Button
                     onClick={handleRunCV}
-                    disabled={loading || !isDataValid()}
+                    disabled={isLoading || !isDataValid()}
                     className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20 cursor-pointer h-9 w-full md:w-auto"
                 >
-                    {loading ? (
+                    {isLoading ? (
                         <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Running...

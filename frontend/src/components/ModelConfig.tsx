@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -20,30 +20,7 @@ import {
 } from '@/components/ui/accordion';
 import { useConfigStore } from '@/stores/configStore';
 import { useDataStore } from '@/stores/dataStore';
-
-const COUNTRIES = [
-    { code: 'none', name: 'None' },
-    { code: 'US', name: 'United States' },
-    { code: 'PK', name: 'Pakistan' },
-    { code: 'GB', name: 'United Kingdom' },
-    { code: 'IN', name: 'India' },
-    { code: 'CN', name: 'China' },
-    { code: 'DE', name: 'Germany' },
-    { code: 'FR', name: 'France' },
-    { code: 'CA', name: 'Canada' },
-    { code: 'AU', name: 'Australia' },
-    { code: 'JP', name: 'Japan' },
-    { code: 'BR', name: 'Brazil' },
-    { code: 'RU', name: 'Russia' },
-    { code: 'ZA', name: 'South Africa' },
-    { code: 'TR', name: 'Turkey' },
-    { code: 'SA', name: 'Saudi Arabia' },
-    { code: 'MX', name: 'Mexico' },
-    { code: 'ID', name: 'Indonesia' },
-    { code: 'IT', name: 'Italy' },
-    { code: 'ES', name: 'Spain' },
-    { code: 'KR', name: 'South Korea' },
-];
+import { getCountries } from '@/services/api';
 
 export function ModelConfig() {
     const { config, periods, freq, setConfig, setPeriods, setFreq, addHoliday, removeHoliday } = useConfigStore();
@@ -52,6 +29,21 @@ export function ModelConfig() {
     // Local state for new holiday input
     const [newHolidayName, setNewHolidayName] = useState('');
     const [newHolidayDate, setNewHolidayDate] = useState('');
+    const [countries, setCountries] = useState<{ code: string; name: string }[]>([]);
+
+    useEffect(() => {
+        getCountries().then((codes) => {
+            const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+            const list = codes.map(code => ({
+                code,
+                name: displayNames.of(code) || code
+            })).sort((a, b) => a.name.localeCompare(b.name));
+            setCountries([{ code: 'none', name: 'None' }, ...list]);
+        }).catch(err => {
+            console.error("Failed to load countries:", err);
+            setCountries([{ code: 'none', name: 'None' }]);
+        });
+    }, []);
 
     const handleAddHoliday = () => {
         if (newHolidayName && newHolidayDate) {
@@ -233,7 +225,7 @@ export function ModelConfig() {
                                             <SelectValue placeholder="None" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-zinc-900 border-zinc-800 text-white max-h-[200px]">
-                                            {COUNTRIES.map((c) => (
+                                            {countries.map((c) => (
                                                 <SelectItem key={c.code} value={c.code} className="cursor-pointer focus:bg-zinc-800">
                                                     {c.name}
                                                 </SelectItem>

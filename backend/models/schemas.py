@@ -1,5 +1,5 @@
 """Pydantic schemas for Prophet API requests and responses."""
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -22,18 +22,18 @@ class Holiday(BaseModel):
 class CustomSeasonality(BaseModel):
     """Custom seasonality definition."""
     name: str = Field(..., description="Seasonality name")
-    period: float = Field(..., description="Period in days")
-    fourier_order: int = Field(..., description="Number of Fourier terms")
-    prior_scale: Optional[float] = Field(10.0, description="Prior scale for regularization")
-    mode: Optional[str] = Field(None, description="'additive' or 'multiplicative'")
+    period: float = Field(..., gt=0, description="Period in days")
+    fourier_order: int = Field(..., gt=0, description="Number of Fourier terms")
+    prior_scale: Optional[float] = Field(10.0, gt=0, description="Prior scale for regularization")
+    mode: Optional[Literal["additive", "multiplicative"]] = Field(None, description="'additive' or 'multiplicative'")
 
 
 class Regressor(BaseModel):
     """Additional regressor definition."""
     name: str = Field(..., description="Regressor column name")
-    prior_scale: Optional[float] = Field(None, description="Prior scale")
+    prior_scale: Optional[float] = Field(None, gt=0, description="Prior scale")
     standardize: Optional[bool] = Field(True, description="Whether to standardize")
-    mode: Optional[str] = Field(None, description="'additive' or 'multiplicative'")
+    mode: Optional[Literal["additive", "multiplicative"]] = Field(None, description="'additive' or 'multiplicative'")
 
 
 class RegressorData(BaseModel):
@@ -45,28 +45,28 @@ class RegressorData(BaseModel):
 class ModelConfig(BaseModel):
     """Prophet model configuration."""
     # Growth
-    growth: str = Field("linear", description="'linear', 'logistic', or 'flat'")
+    growth: Literal["linear", "logistic", "flat"] = Field("linear", description="'linear', 'logistic', or 'flat'")
     
     # Changepoints
-    n_changepoints: int = Field(25, description="Number of potential changepoints")
-    changepoint_range: float = Field(0.8, description="Proportion of history for changepoints")
-    changepoint_prior_scale: float = Field(0.05, description="Flexibility of changepoints")
+    n_changepoints: int = Field(25, ge=0, le=100, description="Number of potential changepoints")
+    changepoint_range: float = Field(0.8, ge=0.0, le=1.0, description="Proportion of history for changepoints")
+    changepoint_prior_scale: float = Field(0.05, gt=0, description="Flexibility of changepoints")
     changepoints: Optional[list[str]] = Field(None, description="Manual changepoint dates")
     
     # Seasonality
     yearly_seasonality: str | int | bool = Field("auto", description="Yearly seasonality")
     weekly_seasonality: str | int | bool = Field("auto", description="Weekly seasonality")
     daily_seasonality: str | int | bool = Field("auto", description="Daily seasonality")
-    seasonality_mode: str = Field("additive", description="'additive' or 'multiplicative'")
-    seasonality_prior_scale: float = Field(10.0, description="Seasonality prior scale")
+    seasonality_mode: Literal["additive", "multiplicative"] = Field("additive", description="'additive' or 'multiplicative'")
+    seasonality_prior_scale: float = Field(10.0, gt=0, description="Seasonality prior scale")
     
     # Holidays
-    holidays_prior_scale: float = Field(10.0, description="Holidays prior scale")
+    holidays_prior_scale: float = Field(10.0, gt=0, description="Holidays prior scale")
     country_holidays: Optional[str] = Field(None, description="Country code for built-in holidays")
     
     # Uncertainty
-    interval_width: float = Field(0.8, description="Uncertainty interval width")
-    mcmc_samples: int = Field(0, description="MCMC samples (0 for MAP estimation)")
+    interval_width: float = Field(0.8, ge=0.0, le=1.0, description="Uncertainty interval width")
+    mcmc_samples: int = Field(0, ge=0, le=1000, description="MCMC samples (0 for MAP estimation)")
     
     # Custom components
     custom_seasonalities: list[CustomSeasonality] = Field(default_factory=list)
@@ -76,10 +76,10 @@ class ModelConfig(BaseModel):
 
 class ForecastRequest(BaseModel):
     """Request to generate a forecast."""
-    data: list[DataPoint] = Field(..., description="Historical data")
+    data: list[DataPoint] = Field(..., min_length=2, max_length=50000, description="Historical data")
     config: ModelConfig = Field(default_factory=ModelConfig)
-    periods: int = Field(30, description="Number of periods to forecast")
-    freq: str = Field("D", description="Frequency: D, H, W, M, etc.")
+    periods: int = Field(30, ge=1, le=3650, description="Number of periods to forecast")
+    freq: str = Field("D", min_length=1, description="Frequency: D, H, W, M, etc.")
     regressor_data: Optional[list[RegressorData]] = Field(None, description="Regressor values")
     future_regressor_data: Optional[list[RegressorData]] = Field(None, description="Future regressor values")
 
@@ -112,7 +112,7 @@ class ForecastResponse(BaseModel):
 
 class CrossValidationRequest(BaseModel):
     """Request for cross-validation."""
-    data: list[DataPoint]
+    data: list[DataPoint] = Field(..., min_length=2, max_length=50000)
     config: ModelConfig = Field(default_factory=ModelConfig)
     initial: str = Field("730 days", description="Initial training period")
     period: str = Field("180 days", description="Spacing between cutoff dates")
