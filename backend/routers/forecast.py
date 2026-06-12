@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/forecast", response_model=ForecastResponse)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def create_forecast(request: Request, body: ForecastRequest) -> ForecastResponse:
     """Generate a Prophet forecast."""
     try:
@@ -63,7 +63,7 @@ def create_forecast(request: Request, body: ForecastRequest) -> ForecastResponse
 
 
 @router.post("/cross-validate", response_model=CrossValidationResponse)
-@limiter.limit("2/minute")
+@limiter.limit("10/minute")
 def cross_validate(request: Request, body: CrossValidationRequest) -> CrossValidationResponse:
     """Run cross-validation on a Prophet model."""
     try:

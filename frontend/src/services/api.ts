@@ -24,7 +24,8 @@ export function isBackendWarmingUp(error: unknown): boolean {
             error.code === 'ECONNREFUSED' || // connection refused
             error.code === 'ETIMEDOUT' || // timeout
             error.message?.includes('timeout') ||
-            error.response?.status === 503 // Service Unavailable
+            error.response?.status === 503 || // Service Unavailable
+            error.response?.status === 504 // Gateway Timeout
         );
     }
     return false;

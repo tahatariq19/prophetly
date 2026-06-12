@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -19,15 +18,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Timeout middleware
-class TimeoutMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        try:
-            return await asyncio.wait_for(call_next(request), timeout=60.0)
-        except asyncio.TimeoutError:
-            return JSONResponse({"detail": "Request timeout"}, status_code=504)
-
-app.add_middleware(TimeoutMiddleware)
+# Timeout middleware removed to avoid conflict with Render load balancer 100s timeout
 
 # CORS configuration
 origins = [
