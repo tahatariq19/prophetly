@@ -9,6 +9,30 @@ export interface CSVParseResult {
   autoFloor: string | null;
 }
 
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"' || char === "'") {
+      if (inQuotes && line[i + 1] === char) {
+        cur += char;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      result.push(cur.trim().replace(/^["']|["']$/g, ""));
+      cur = "";
+    } else {
+      cur += char;
+    }
+  }
+  result.push(cur.trim().replace(/^["']|["']$/g, ""));
+  return result;
+}
+
 export function analyzeCSV(csvText: string): CSVParseResult {
   const lines = csvText
     .split(/\r?\n/)
@@ -19,7 +43,7 @@ export function analyzeCSV(csvText: string): CSVParseResult {
     throw new Error("CSV must contain a header row and at least 1 data row.");
   }
 
-  const columns = lines[0].split(",").map((h) => h.trim());
+  const columns = parseCSVLine(lines[0]);
   const lowerCols = columns.map((c) => c.toLowerCase());
 
   const dsIdx = lowerCols.findIndex(
@@ -42,7 +66,7 @@ export function analyzeCSV(csvText: string): CSVParseResult {
   const rawRows: Array<Record<string, string>> = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim());
+    const cols = parseCSVLine(lines[i]);
     if (cols.length === 0) continue;
 
     const record: Record<string, string> = {};
@@ -75,32 +99,43 @@ export function buildDataPointsFromCSV(
 
   for (const row of rawRows) {
     const dsVal = row[dsCol];
-    const yVal = parseFloat(row[yCol]);
+    const rawY = row[yCol]
+      ? String(row[yCol]).replace(/,/g, "").replace(/[$€£]/g, "").trim()
+      : "";
+    const yVal = Number.parseFloat(rawY);
 
-    if (!dsVal || isNaN(yVal)) continue;
+    if (!dsVal || Number.isNaN(yVal)) continue;
 
     const pt: DataPoint = { ds: dsVal, y: yVal };
 
     // Cap (Column or Fixed)
     if (capCol && row[capCol] !== undefined) {
-      const capParsed = parseFloat(row[capCol]);
-      if (!isNaN(capParsed)) pt.cap = capParsed;
+      const rawCap = String(row[capCol])
+        .replace(/,/g, "")
+        .replace(/[$€£]/g, "")
+        .trim();
+      const capParsed = Number.parseFloat(rawCap);
+      if (!Number.isNaN(capParsed)) pt.cap = capParsed;
     } else if (
       fixedCap !== undefined &&
       fixedCap !== null &&
-      !isNaN(fixedCap)
+      !Number.isNaN(fixedCap)
     ) {
       pt.cap = fixedCap;
     }
 
     // Floor (Column or Fixed)
     if (floorCol && row[floorCol] !== undefined) {
-      const floorParsed = parseFloat(row[floorCol]);
-      if (!isNaN(floorParsed)) pt.floor = floorParsed;
+      const rawFloor = String(row[floorCol])
+        .replace(/,/g, "")
+        .replace(/[$€£]/g, "")
+        .trim();
+      const floorParsed = Number.parseFloat(rawFloor);
+      if (!Number.isNaN(floorParsed)) pt.floor = floorParsed;
     } else if (
       fixedFloor !== undefined &&
       fixedFloor !== null &&
-      !isNaN(fixedFloor)
+      !Number.isNaN(fixedFloor)
     ) {
       pt.floor = fixedFloor;
     }

@@ -383,7 +383,7 @@ export function generateFutureTimestamps(
 
 export function checkHasTimeComponents(
   dsSeconds: number[],
-  dataPoints: DataPoint[],
+  _dataPoints: DataPoint[],
   freq?: string,
 ): boolean {
   if (freq) {
@@ -410,14 +410,6 @@ export function checkHasTimeComponents(
       ) {
         return true;
       }
-    }
-  }
-  for (const d of dataPoints) {
-    if (
-      typeof d.ds === "string" &&
-      (d.ds.includes("T") || d.ds.includes(" ") || d.ds.includes(":"))
-    ) {
-      return true;
     }
   }
   for (const tsSec of dsSeconds) {
@@ -739,7 +731,11 @@ export function runProphetFitAndPredict(
     }
 
     const changepointDates: string[] = [];
-    if (config.changepoints && Array.isArray(config.changepoints)) {
+    if (
+      config.changepoints &&
+      Array.isArray(config.changepoints) &&
+      config.changepoints.length > 0
+    ) {
       changepointDates.push(...config.changepoints);
     } else {
       const N = sorted.length;
