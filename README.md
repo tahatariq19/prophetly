@@ -14,8 +14,8 @@ Prophetly is a privacy-first time series forecasting app. It runs Facebook Proph
 
 ### Prerequisites
 
-- Node.js (v18.20.0 or newer)
-- npm (v9.0.0 or newer)
+- Node.js (v22.0.0 or newer)
+- npm (v10.0.0 or newer)
 
 ### Development
 
