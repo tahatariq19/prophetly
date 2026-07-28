@@ -96,9 +96,9 @@ export async function fetchCrossValidation(
   });
 }
 
-export function cancelCrossValidation(): void {
+export function cancelCrossValidation(requestId?: string): void {
   if (workerInstance) {
-    workerInstance.postMessage({ type: "CANCEL_CV" });
+    workerInstance.postMessage({ type: "CANCEL_CV", id: requestId });
   }
 }
 

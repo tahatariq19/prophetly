@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import { applyTheme } from "../lib/theme";
 
 export class MockDOMThemeEnvironment {
@@ -126,4 +127,32 @@ export async function runThemeAdaptationStressTest() {
   }
 
   return results;
+}
+
+if (process.env.VITEST) {
+  describe("Theme Adaptation & Dark Mode Sync", () => {
+    it("toggles dark mode and updates HTML element class and localStorage", () => {
+      const env = new MockDOMThemeEnvironment();
+      applyTheme("dark");
+      expect(env.documentClassList.has("dark")).toBe(true);
+      expect(env.localStorageStore.get("theme")).toBe("dark");
+    });
+
+    it("toggles light mode and removes dark class and updates localStorage", () => {
+      const env = new MockDOMThemeEnvironment();
+      applyTheme("dark");
+      applyTheme("light");
+      expect(env.documentClassList.has("dark")).toBe(false);
+      expect(env.localStorageStore.get("theme")).toBe("light");
+    });
+
+    it("handles 1000 rapid theme toggles without state desync", () => {
+      const env = new MockDOMThemeEnvironment();
+      for (let i = 0; i < 1000; i++) {
+        applyTheme(i % 2 === 0 ? "dark" : "light");
+      }
+      expect(env.documentClassList.has("dark")).toBe(false);
+      expect(env.localStorageStore.get("theme")).toBe("light");
+    });
+  });
 }

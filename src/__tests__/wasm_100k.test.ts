@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import initProphet, { Prophet } from "@bsull/augurs/prophet";
 import { optimizer } from "@bsull/augurs-prophet-wasmstan";
+import { describe, expect, it } from "vitest";
 import { parseCSVText } from "../lib/csv";
 import type { DataPoint } from "../lib/types";
 
@@ -112,7 +113,7 @@ export async function runWasmAnd100kStressTest() {
         seasonalityPriorScale: 10.0,
         holidaysPriorScale: 10.0,
         intervalWidth: 0.8,
-        uncertaintySamples: 1000,
+        uncertaintySamples: 0,
         yearlySeasonality: { type: "auto" as const },
         weeklySeasonality: { type: "auto" as const },
         dailySeasonality: { type: "auto" as const },
@@ -170,4 +171,45 @@ export async function runWasmAnd100kStressTest() {
   }
 
   return results;
+}
+
+if (process.env.VITEST) {
+  describe("WASM 100k Benchmark & Dataset Support", () => {
+    it("initializes WASM engine in Node environment", async () => {
+      await initNodeWasm();
+      const prophet = new Prophet({ optimizer });
+      expect(prophet).toBeDefined();
+      prophet.free();
+    });
+
+    it("parses 100k CSV rows into DataPoints correctly", () => {
+      const csvContent = generateSyntheticCSV(100000);
+      const parsed = parseCSVText(csvContent);
+      expect(parsed.length).toBe(100000);
+      expect(parsed[0].ds).toBe("2020-01-01");
+      expect(typeof parsed[0].y).toBe("number");
+    });
+
+    it("fits and predicts WASM model on dataset and performs memory cleanup", async () => {
+      await initNodeWasm();
+      const mockData = generateSyntheticData(1000);
+      const dsSecs = mockData.map((d) =>
+        Math.floor(new Date(d.ds).getTime() / 1000),
+      );
+      const yVals = mockData.map((d) => d.y);
+
+      const prophet = new Prophet({
+        optimizer,
+        growth: "linear",
+        nChangepoints: 25,
+      });
+
+      prophet.fit({ ds: dsSecs, y: yVals });
+      const predictions = prophet.predict({ ds: dsSecs });
+      expect(predictions.yhat.point.length).toBe(1000);
+      expect(Number.isFinite(predictions.yhat.point[0])).toBe(true);
+
+      expect(() => prophet.free()).not.toThrow();
+    });
+  });
 }

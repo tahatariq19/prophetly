@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import initProphet, { Prophet } from "@bsull/augurs/prophet";
 import { optimizer } from "@bsull/augurs-prophet-wasmstan";
+import { describe, expect, it } from "vitest";
 import { type AppState, appReducer, defaultConfig } from "../lib/state";
 import type { ModelConfig } from "../lib/types";
 
@@ -168,4 +169,143 @@ export async function runPresetsStressTest() {
   }
 
   return results;
+}
+
+if (process.env.VITEST) {
+  describe("Model Configuration Presets", () => {
+    it("applies Quick preset to state reducer and fits WASM model", async () => {
+      await initNodeWasm();
+      const initialState: AppState = {
+        step: 2,
+        data: [],
+        datasetName: "Test Dataset",
+        sampleDataLoaded: false,
+        actionType: "forecast",
+        config: defaultConfig,
+        forecastParams: { periods: 30, freq: "D" },
+        cvParams: {
+          initial: "300 days",
+          period: "60 days",
+          horizon: "90 days",
+        },
+        isLoading: false,
+        loadingMessage: "",
+        forecastResults: null,
+        cvResults: null,
+        activeResultsMode: "forecast",
+        error: null,
+      };
+
+      const updatedState = appReducer(initialState, {
+        type: "SET_CONFIG",
+        payload: PRESET_CONFIGS.Quick,
+      });
+
+      expect(updatedState.config.growth).toBe("linear");
+      expect(updatedState.config.seasonality_mode).toBe("additive");
+      expect(updatedState.config.n_changepoints).toBe(15);
+
+      const startTs = Math.floor(Date.UTC(2024, 0, 1) / 1000);
+      const dsSecs: number[] = [];
+      const yVals: number[] = [];
+      for (let i = 0; i < 200; i++) {
+        dsSecs.push(startTs + i * 86400);
+        yVals.push(50 + i * 0.1 + Math.sin(i / 10));
+      }
+
+      const prophet = new Prophet({
+        optimizer,
+        growth: "linear",
+        nChangepoints: updatedState.config.n_changepoints,
+        seasonalityMode: "additive",
+      });
+      prophet.fit({ ds: dsSecs, y: yVals });
+      const predictions = prophet.predict({ ds: dsSecs });
+      expect(predictions.yhat.point.length).toBe(200);
+      prophet.free();
+    });
+
+    it("applies Detailed preset with multiplicative seasonality and fits model", async () => {
+      await initNodeWasm();
+      const initialState: AppState = {
+        step: 2,
+        data: [],
+        datasetName: "Test Dataset",
+        sampleDataLoaded: false,
+        actionType: "forecast",
+        config: defaultConfig,
+        forecastParams: { periods: 30, freq: "D" },
+        cvParams: {
+          initial: "300 days",
+          period: "60 days",
+          horizon: "90 days",
+        },
+        isLoading: false,
+        loadingMessage: "",
+        forecastResults: null,
+        cvResults: null,
+        activeResultsMode: "forecast",
+        error: null,
+      };
+
+      const updatedState = appReducer(initialState, {
+        type: "SET_CONFIG",
+        payload: PRESET_CONFIGS.Detailed,
+      });
+
+      expect(updatedState.config.seasonality_mode).toBe("multiplicative");
+      expect(updatedState.config.n_changepoints).toBe(30);
+
+      const startTs = Math.floor(Date.UTC(2024, 0, 1) / 1000);
+      const dsSecs: number[] = [];
+      const yVals: number[] = [];
+      for (let i = 0; i < 200; i++) {
+        dsSecs.push(startTs + i * 86400);
+        yVals.push(100 + i * 0.2 + Math.cos(i / 10));
+      }
+
+      const prophet = new Prophet({
+        optimizer,
+        growth: "linear",
+        seasonalityMode: "multiplicative",
+        nChangepoints: 30,
+      });
+      prophet.fit({ ds: dsSecs, y: yVals });
+      const predictions = prophet.predict({ ds: dsSecs });
+      expect(predictions.yhat.point.length).toBe(200);
+      prophet.free();
+    });
+
+    it("applies Conservative preset with tight changepoint prior scale", async () => {
+      await initNodeWasm();
+      const initialState: AppState = {
+        step: 2,
+        data: [],
+        datasetName: "Test Dataset",
+        sampleDataLoaded: false,
+        actionType: "forecast",
+        config: defaultConfig,
+        forecastParams: { periods: 30, freq: "D" },
+        cvParams: {
+          initial: "300 days",
+          period: "60 days",
+          horizon: "90 days",
+        },
+        isLoading: false,
+        loadingMessage: "",
+        forecastResults: null,
+        cvResults: null,
+        activeResultsMode: "forecast",
+        error: null,
+      };
+
+      const updatedState = appReducer(initialState, {
+        type: "SET_CONFIG",
+        payload: PRESET_CONFIGS.Conservative,
+      });
+
+      expect(updatedState.config.changepoint_prior_scale).toBe(0.01);
+      expect(updatedState.config.seasonality_prior_scale).toBe(1.0);
+    });
+  });
 }

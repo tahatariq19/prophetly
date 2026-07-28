@@ -63,6 +63,7 @@ export interface ForecastRequest {
 
 export interface ForecastPoint {
   ds: string;
+  ts?: number;
   yhat: number;
   yhat_lower: number;
   yhat_upper: number;

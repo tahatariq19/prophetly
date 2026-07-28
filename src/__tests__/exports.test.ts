@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import type { DataPoint, ForecastPoint, ForecastResponse } from "../lib/types";
 
 export function simulateForecastCSVExport(forecast: ForecastPoint[]): string {
@@ -110,13 +111,12 @@ export async function runExportsStressTest() {
     console.log(
       "Testing PNG Export parameters and background color handling...",
     );
-    // Check that html-to-image configuration options match required specs
     const mockElement = {
       clientWidth: 800,
       clientHeight: 400,
       style: { backgroundColor: "#0f172a" },
     };
-    const defaultBgColor = "#0f172a"; // dark mode theme background fallback
+    const defaultBgColor = "#0f172a";
     const pngConfigValid =
       mockElement.clientWidth > 0 && defaultBgColor === "#0f172a";
     results.pngExportPassed = pngConfigValid;
@@ -129,4 +129,63 @@ export async function runExportsStressTest() {
   }
 
   return results;
+}
+
+if (process.env.VITEST) {
+  describe("CSV, JSON & PNG Exports", () => {
+    it("formats CSV forecast export correctly with 5 decimal columns and headers", () => {
+      const mockForecast: ForecastPoint[] = [
+        {
+          ds: "2024-01-01",
+          yhat: 10.123456,
+          yhat_lower: 8.5,
+          yhat_upper: 12.0,
+          trend: 10.0,
+        },
+        {
+          ds: "2024-01-02",
+          yhat: 11.2,
+          yhat_lower: 9.1,
+          yhat_upper: 13.3,
+          trend: 11.0,
+        },
+      ];
+
+      const csv = simulateForecastCSVExport(mockForecast);
+      const lines = csv.split("\n");
+      expect(lines[0]).toBe("ds,yhat,yhat_lower,yhat_upper,trend");
+      expect(lines.length).toBe(3);
+      expect(lines[1]).toBe("2024-01-01,10.1235,8.5000,12.0000,10.0000");
+    });
+
+    it("serializes and parses JSON export payload cleanly", () => {
+      const mockData: DataPoint[] = [
+        { ds: "2024-01-01", y: 10 },
+        { ds: "2024-01-02", y: 12 },
+      ];
+      const mockForecast: ForecastResponse = {
+        forecast: [
+          { ds: "2024-01-01", yhat: 10 },
+          { ds: "2024-01-02", yhat: 12 },
+        ],
+        changepoints: ["2024-01-01"],
+      };
+
+      const res = simulateJSONExport(mockData, mockForecast);
+      expect(res.sizeMB).toBeGreaterThan(0);
+      expect(res.parseTimeMs).toBeLessThan(1000);
+      const parsed = JSON.parse(res.jsonString);
+      expect(parsed.dataset.length).toBe(2);
+      expect(parsed.forecast.length).toBe(2);
+      expect(parsed.exportedAt).toBeDefined();
+    });
+
+    it("handles empty or partial forecast inputs gracefully in JSON export", () => {
+      const res = simulateJSONExport([], null, null);
+      const parsed = JSON.parse(res.jsonString);
+      expect(parsed.dataset).toEqual([]);
+      expect(parsed.forecast).toBeNull();
+      expect(parsed.cv_results).toBeNull();
+    });
+  });
 }

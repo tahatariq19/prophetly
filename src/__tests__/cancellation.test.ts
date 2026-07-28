@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import initProphet from "@bsull/augurs/prophet";
-import type { DataPoint } from "../lib/types";
+import { describe, expect, it } from "vitest";
+import {
+  ensureWasmInitialized,
+  requestCrossValidationCancel,
+  runCrossValidation,
+} from "../lib/prophet.worker";
+import { cancelCrossValidation } from "../lib/prophet-client";
+import type { CrossValidationRequest, DataPoint } from "../lib/types";
 
 async function initNodeWasm() {
   const wasmPath = path.resolve(
@@ -10,6 +17,7 @@ async function initNodeWasm() {
   );
   const wasmBuffer = fs.readFileSync(wasmPath);
   await initProphet(wasmBuffer);
+  await ensureWasmInitialized(wasmBuffer);
 }
 
 // Simulated Worker Cross-Validation Engine with Cancellation Support
@@ -31,7 +39,6 @@ export class MockWorkerProphetEngine {
     let evaluated = 0;
 
     for (let k = 0; k < cutoffsCount; k++) {
-      // Yield to allow message processing (simulate worker event loop tick)
       await new Promise((r) => setTimeout(r, 10));
 
       if (cancelAtCutoff !== undefined && k === cancelAtCutoff) {
@@ -46,7 +53,6 @@ export class MockWorkerProphetEngine {
       const step = `Cutoff ${k + 1}/${cutoffsCount}`;
       this.progressEvents.push({ percent, step });
 
-      // Simulate fit execution delay
       evaluated++;
     }
 
@@ -107,4 +113,70 @@ export async function runCancellationStressTest() {
   }
 
   return results;
+}
+
+if (process.env.VITEST) {
+  describe("Web Worker Cancellation Context & RPC", () => {
+    it("handles immediate cancellation on simulation dispatch", async () => {
+      const engine = new MockWorkerProphetEngine();
+      const res = await engine.runCrossValidationSim([], 10, 0);
+      expect(res.status).toBe("CANCELLED");
+      expect(res.evaluatedCutoffs).toBe(0);
+    });
+
+    it("handles midway cancellation during simulation execution", async () => {
+      const engine = new MockWorkerProphetEngine();
+      const res = await engine.runCrossValidationSim([], 10, 3);
+      expect(res.status).toBe("CANCELLED");
+      expect(res.evaluatedCutoffs).toBe(3);
+    });
+
+    it("completes uncancelled cross-validation run", async () => {
+      const engine = new MockWorkerProphetEngine();
+      const res = await engine.runCrossValidationSim([], 5);
+      expect(res.status).toBe("SUCCESS");
+      expect(res.evaluatedCutoffs).toBe(5);
+    });
+
+    it("tests scoped cancellation in worker RPC context", async () => {
+      await initNodeWasm();
+      const mockData: DataPoint[] = [];
+      const startTs = new Date("2024-01-01T00:00:00Z").getTime();
+      for (let i = 0; i < 100; i++) {
+        const ds = new Date(startTs + i * 86400 * 1000)
+          .toISOString()
+          .split("T")[0];
+        mockData.push({ ds, y: 10 + i * 0.5 });
+      }
+      const cvReq: CrossValidationRequest = {
+        data: mockData,
+        config: { growth: "linear", n_changepoints: 10 },
+        initial: "50 days",
+        period: "10 days",
+        horizon: "15 days",
+        freq: "D",
+      };
+
+      // Trigger cancel for a different request ID -> should NOT cancel request 'req-1'
+      requestCrossValidationCancel("req-999");
+      const cvPromise = runCrossValidation(cvReq, "req-1");
+      const res = await cvPromise;
+      expect(res).not.toBeNull();
+      expect(res?.cv_results.length).toBeGreaterThan(0);
+
+      // Now trigger cancel for request ID 'req-2' during execution
+      const cancelPromise = (async () => {
+        await new Promise((r) => setTimeout(r, 1));
+        requestCrossValidationCancel("req-2");
+      })();
+      const cancelledRes = await runCrossValidation(cvReq, "req-2");
+      await cancelPromise;
+      expect(cancelledRes).toBeNull();
+    });
+
+    it("exports cancelCrossValidation client function without throwing", () => {
+      expect(() => cancelCrossValidation("test-id")).not.toThrow();
+      expect(() => cancelCrossValidation()).not.toThrow();
+    });
+  });
 }
