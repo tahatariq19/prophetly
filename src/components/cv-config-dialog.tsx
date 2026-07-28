@@ -175,6 +175,7 @@ export function CVConfigDialog({
                 step={0.05}
                 value={split.initialPct}
                 onValueChange={handleInitialChange}
+                aria-label="Initial Training Split"
               />
             </Field>
 
@@ -194,6 +195,7 @@ export function CVConfigDialog({
                 step={0.05}
                 value={split.horizonPct}
                 onValueChange={handleHorizonChange}
+                aria-label="Forecast Horizon"
               />
             </Field>
 
@@ -213,6 +215,7 @@ export function CVConfigDialog({
                 step={0.025}
                 value={split.periodPct}
                 onValueChange={handlePeriodChange}
+                aria-label="Cutoff Step Period"
               />
             </Field>
           </div>

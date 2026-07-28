@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import initProphet from "@bsull/augurs/prophet";
 import { beforeAll, describe, expect, it } from "vitest";
+import { detectFrequencyCode } from "../lib/csv";
 import {
   checkHasTimeComponents,
   ensureWasmInitialized,
@@ -12,6 +13,7 @@ import {
   parseTimestamp,
   runCrossValidation,
 } from "../lib/prophet.worker";
+import { appReducer, initialAppState } from "../lib/state";
 import type { CrossValidationRequest, DataPoint } from "../lib/types";
 
 beforeAll(async () => {
@@ -423,5 +425,32 @@ describe("Cross-Validation Cutoffs - Backward Stepping & Chronological Ordering"
     expect(cutoffs.length).toBe(1);
     expect(cutoffs[0]).toBe(minTs + initialSec);
     expect(cutoffs[0]).toBe(maxTs - horizonSec);
+  });
+
+  it("auto-detects dataset frequency code and sets state forecastParams.freq", () => {
+    const monthlyData = [
+      { ds: "1949-01-01", y: 112 },
+      { ds: "1949-02-01", y: 118 },
+      { ds: "1949-03-01", y: 132 },
+    ];
+    expect(detectFrequencyCode(monthlyData)).toBe("M");
+
+    const dailyData = [
+      { ds: "2024-01-01", y: 10 },
+      { ds: "2024-01-02", y: 12 },
+      { ds: "2024-01-03", y: 11 },
+    ];
+    expect(detectFrequencyCode(dailyData)).toBe("D");
+
+    const initialState = initialAppState;
+    const newState = appReducer(initialState, {
+      type: "SET_DATA",
+      payload: {
+        data: monthlyData,
+        isSample: true,
+        datasetName: "Test Monthly",
+      },
+    });
+    expect(newState.forecastParams.freq).toBe("M");
   });
 });

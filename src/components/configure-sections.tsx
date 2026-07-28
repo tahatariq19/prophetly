@@ -478,12 +478,16 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1">
         <Input
+          id="holiday-name"
+          aria-label="Holiday Name"
           placeholder="Holiday Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="h-8 text-xs sm:col-span-1"
         />
         <Input
+          id="holiday-date"
+          aria-label="Holiday Date"
           type="date"
           value={ds}
           onChange={(e) => setDs(e.target.value)}
@@ -491,6 +495,8 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
         />
         <div className="flex items-center gap-1 sm:col-span-1">
           <Input
+            id="holiday-lower"
+            aria-label="Holiday Lower Window"
             type="number"
             placeholder="Lower"
             value={lower}
@@ -498,6 +504,8 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
             className="h-8 text-xs"
           />
           <Input
+            id="holiday-upper"
+            aria-label="Holiday Upper Window"
             type="number"
             placeholder="Upper"
             value={upper}
@@ -623,6 +631,8 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 </div>
               </div>
               <Input
+                id="n_changepoints"
+                aria-label="Number of Changepoints"
                 type="number"
                 min={0}
                 max={100}
@@ -713,6 +723,8 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
             </FieldLabel>
             <div className="flex gap-2">
               <Input
+                id="manual-changepoint-date"
+                aria-label="Manual Changepoint Date"
                 type="date"
                 value={cpDate}
                 onChange={(e) => setCpDate(e.target.value)}
@@ -874,12 +886,16 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1">
             <Input
+              id="seasonality-name"
+              aria-label="Seasonality Name"
               placeholder="Seasonality Name"
               value={seasName}
               onChange={(e) => setSeasName(e.target.value)}
               className="h-8 text-xs sm:col-span-1"
             />
             <Input
+              id="seasonality-period"
+              aria-label="Seasonality Period"
               type="number"
               placeholder="Period (days)"
               value={seasPeriod}
@@ -889,6 +905,8 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
               className="h-8 text-xs sm:col-span-1"
             />
             <Input
+              id="seasonality-fourier"
+              aria-label="Seasonality Fourier Order"
               type="number"
               placeholder="Fourier Order"
               value={seasFourier}
@@ -950,6 +968,8 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
 
           <div className="flex gap-2 pt-1">
             <Input
+              id="regressor-name"
+              aria-label="Regressor Column Name"
               placeholder="Regressor Column Name"
               value={regName}
               onChange={(e) => setRegName(e.target.value)}
@@ -1102,6 +1122,8 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 </div>
               </div>
               <Input
+                id="mcmc_samples"
+                aria-label="MCMC Samples"
                 type="number"
                 min={0}
                 max={100}

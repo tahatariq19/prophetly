@@ -164,6 +164,30 @@ export function parseCSVText(csvText: string): DataPoint[] {
   );
 }
 
+export function detectFrequencyCode(data: { ds: string }[]): string {
+  if (data.length < 2) return "D";
+  const diffs: number[] = [];
+  for (let i = 1; i < Math.min(data.length, 150); i++) {
+    const t1 = new Date(data[i - 1].ds).getTime();
+    const t2 = new Date(data[i].ds).getTime();
+    if (!isNaN(t1) && !isNaN(t2)) {
+      diffs.push(Math.abs(t2 - t1));
+    }
+  }
+  if (diffs.length === 0) return "D";
+  diffs.sort((a, b) => a - b);
+  const medianDiffMs = diffs[Math.floor(diffs.length / 2)];
+  const diffHours = medianDiffMs / (1000 * 60 * 60);
+  const diffDays = diffHours / 24;
+
+  if (diffHours >= 0.9 && diffHours <= 2) return "H";
+  if (diffDays >= 0.8 && diffDays <= 1.2) return "D";
+  if (diffDays >= 6 && diffDays <= 8) return "W";
+  if (diffDays >= 27 && diffDays <= 32) return "M";
+  if (diffDays >= 360 && diffDays <= 366) return "Y";
+  return "D";
+}
+
 export function exportForecastCSV(forecast: ForecastPoint[]): void {
   const headers = ["ds", "yhat", "yhat_lower", "yhat_upper", "trend"];
   const rows = forecast.map((p) => [

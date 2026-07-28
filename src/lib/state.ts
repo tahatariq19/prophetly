@@ -1,3 +1,4 @@
+import { detectFrequencyCode } from "./csv";
 import type { ForecastHistoryEntry } from "./history";
 import type {
   CrossValidationResponse,
@@ -127,7 +128,8 @@ export type AppAction =
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case "SET_DATA":
+    case "SET_DATA": {
+      const detectedFreq = detectFrequencyCode(action.payload.data);
       return {
         ...state,
         data: action.payload.data,
@@ -137,8 +139,13 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           (action.payload.isSample
             ? "Airline Passengers (Sample)"
             : "Custom Dataset"),
+        forecastParams: {
+          ...state.forecastParams,
+          freq: detectedFreq,
+        },
         error: null,
       };
+    }
     case "SET_STEP":
       return {
         ...state,
