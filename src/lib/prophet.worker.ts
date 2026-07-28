@@ -546,6 +546,7 @@ export function runProphetFitAndPredict(
   config: ModelConfig,
   periods: number,
   freq: string,
+  explicitPredictionTs?: number[],
 ): ForecastResponse {
   if (!dataPoints || dataPoints.length < 2) {
     throw new Error(
@@ -604,13 +605,20 @@ export function runProphetFitAndPredict(
       freq,
     );
 
-    const futureTs = generateFutureTimestamps(
-      dsSeconds[dsSeconds.length - 1],
-      periods,
-      freq,
-      dsSeconds,
-    );
-    const allTs = [...dsSeconds, ...futureTs];
+    let allTs: number[];
+    if (explicitPredictionTs && explicitPredictionTs.length > 0) {
+      allTs = Array.from(new Set([...dsSeconds, ...explicitPredictionTs])).sort(
+        (a, b) => a - b,
+      );
+    } else {
+      const futureTs = generateFutureTimestamps(
+        dsSeconds[dsSeconds.length - 1],
+        periods,
+        freq,
+        dsSeconds,
+      );
+      allTs = [...dsSeconds, ...futureTs];
+    }
 
     const predictionData: ProphetPredictionData = {
       ds: allTs,
@@ -620,13 +628,14 @@ export function runProphetFitAndPredict(
       const lastCap =
         sorted[sorted.length - 1].cap ?? Math.max(...yValues) * 1.5;
       const lastFloor = sorted[sorted.length - 1].floor ?? 0;
+      const extraCount = allTs.length - dsSeconds.length;
       predictionData.cap = [
         ...sorted.map((d) => d.cap ?? lastCap),
-        ...Array(periods).fill(lastCap),
+        ...Array(Math.max(0, extraCount)).fill(lastCap),
       ];
       predictionData.floor = [
         ...sorted.map((d) => d.floor ?? lastFloor),
-        ...Array(periods).fill(lastFloor),
+        ...Array(Math.max(0, extraCount)).fill(lastFloor),
       ];
     }
 
@@ -760,6 +769,21 @@ export function runProphetFitAndPredict(
   }
 }
 
+interface EvaluatedPoint {
+  cutoff: string;
+  ds: string;
+  ts: number;
+  y: number;
+  yhat: number;
+  yhat_lower: number;
+  yhat_upper: number;
+  horizonSec: number;
+  squaredErr: number;
+  absErr: number;
+  pctErr: number | null;
+  isCovered: boolean;
+}
+
 export async function runCrossValidation(
   request: CrossValidationRequest,
   id: string,
@@ -801,11 +825,7 @@ export async function runCrossValidation(
     }
 
     const cvResults: Array<Record<string, unknown>> = [];
-    const squaredErrors: number[] = [];
-    const absErrors: number[] = [];
-    const absPctErrors: number[] = [];
-    let coverageHits = 0;
-    let totalEvaluated = 0;
+    const evalPoints: EvaluatedPoint[] = [];
 
     const hasTime = checkHasTimeComponents(
       sorted.map((d) => d.ts),
@@ -843,25 +863,15 @@ export async function runCrossValidation(
         continue;
       }
 
-      const maxTestTs = testSlice[testSlice.length - 1].ts;
-      let stepSec = 86400;
-      if (trainSlice.length > 1) {
-        stepSec = Math.max(
-          1,
-          Math.round(
-            (trainSlice[trainSlice.length - 1].ts - trainSlice[0].ts) /
-              (trainSlice.length - 1),
-          ),
-        );
-      }
-      const periodsNeeded = Math.ceil((maxTestTs - cutoff) / stepSec);
-
+      const testTs = testSlice.map((d) => d.ts);
       const fcResponse = runProphetFitAndPredict(
         trainSlice,
         config,
-        Math.max(periodsNeeded, testSlice.length * 2),
+        testTs.length,
         freq || "D",
+        testTs,
       );
+
       const fcMap = new Map<number, ForecastPoint>();
       for (const pt of fcResponse.forecast) {
         if (pt.ts !== undefined) {
@@ -875,15 +885,25 @@ export async function runCrossValidation(
 
         const err = testPt.y - fcPt.yhat;
         const absErr = Math.abs(err);
-        squaredErrors.push(err * err);
-        absErrors.push(absErr);
-        if (testPt.y !== 0) {
-          absPctErrors.push((absErr / Math.abs(testPt.y)) * 100);
-        }
-        if (testPt.y >= fcPt.yhat_lower && testPt.y <= fcPt.yhat_upper) {
-          coverageHits++;
-        }
-        totalEvaluated++;
+        const pctErr = testPt.y !== 0 ? absErr / Math.abs(testPt.y) : null;
+        const isCovered =
+          testPt.y >= fcPt.yhat_lower && testPt.y <= fcPt.yhat_upper;
+        const hSec = testPt.ts - cutoff;
+
+        evalPoints.push({
+          cutoff: cutoffIso,
+          ds: testPt.ds,
+          ts: testPt.ts,
+          y: testPt.y,
+          yhat: fcPt.yhat,
+          yhat_lower: fcPt.yhat_lower,
+          yhat_upper: fcPt.yhat_upper,
+          horizonSec: hSec,
+          squaredErr: err * err,
+          absErr,
+          pctErr,
+          isCovered,
+        });
 
         cvResults.push({
           cutoff: cutoffIso,
@@ -903,36 +923,104 @@ export async function runCrossValidation(
       return null;
     }
 
-    const n = squaredErrors.length;
-    const mse = n > 0 ? squaredErrors.reduce((a, b) => a + b, 0) / n : 0;
-    const rmse = Math.sqrt(mse);
-    const mae = n > 0 ? absErrors.reduce((a, b) => a + b, 0) / n : 0;
-    const mape =
-      absPctErrors.length > 0
-        ? absPctErrors.reduce((a, b) => a + b, 0) / absPctErrors.length
-        : 0;
-
-    let mdape = 0;
-    if (absPctErrors.length > 0) {
-      const sortedPct = [...absPctErrors].sort((a, b) => a - b);
-      const mid = Math.floor(sortedPct.length / 2);
-      mdape =
-        sortedPct.length % 2 !== 0
-          ? sortedPct[mid]
-          : (sortedPct[mid - 1] + sortedPct[mid]) / 2;
+    if (evalPoints.length === 0) {
+      throw new Error("No cross-validation evaluation points produced.");
     }
 
-    const coverage = totalEvaluated > 0 ? coverageHits / totalEvaluated : 0;
-    const horizonDaysStr = `${Math.round(horizonSec / 86400)} days`;
+    // Sort evaluation points by horizon length
+    evalPoints.sort((a, b) => a.horizonSec - b.horizonSec);
+
+    // Group evaluation points into horizon bins matching Prophet's performance_metrics
+    const uniqueHorizons = Array.from(
+      new Set(evalPoints.map((p) => p.horizonSec)),
+    ).sort((a, b) => a - b);
+
+    const horizonBins: Array<{ label: string; points: EvaluatedPoint[] }> = [];
+
+    if (uniqueHorizons.length <= 12) {
+      for (const hSec of uniqueHorizons) {
+        const pts = evalPoints.filter((p) => p.horizonSec === hSec);
+        const label = hasTime
+          ? `${Math.max(1, Math.round(hSec / 3600))} hours`
+          : `${Math.max(1, Math.round(hSec / 86400))} days`;
+        horizonBins.push({ label, points: pts });
+      }
+    } else {
+      const numBins = 10;
+      const minH = uniqueHorizons[0];
+      const maxH = uniqueHorizons[uniqueHorizons.length - 1];
+      const binWidth = (maxH - minH) / numBins;
+
+      for (let b = 0; b < numBins; b++) {
+        const binStart = minH + b * binWidth;
+        const binEnd = b === numBins - 1 ? maxH + 1 : minH + (b + 1) * binWidth;
+        const pts = evalPoints.filter(
+          (p) => p.horizonSec >= binStart && p.horizonSec < binEnd,
+        );
+        if (pts.length === 0) continue;
+
+        const maxBinH = Math.max(...pts.map((p) => p.horizonSec));
+        const label = hasTime
+          ? `${Math.max(1, Math.round(maxBinH / 3600))} hours`
+          : `${Math.max(1, Math.round(maxBinH / 86400))} days`;
+        horizonBins.push({ label, points: pts });
+      }
+    }
+
+    const horizonLabels: string[] = [];
+    const mseList: number[] = [];
+    const rmseList: number[] = [];
+    const maeList: number[] = [];
+    const mapeList: number[] = [];
+    const mdapeList: number[] = [];
+    const coverageList: number[] = [];
+
+    for (const bin of horizonBins) {
+      const pts = bin.points;
+      const n = pts.length;
+      if (n === 0) continue;
+
+      const mse = pts.reduce((sum, p) => sum + p.squaredErr, 0) / n;
+      const rmse = Math.sqrt(mse);
+      const mae = pts.reduce((sum, p) => sum + p.absErr, 0) / n;
+
+      const pctErrs = pts
+        .map((p) => p.pctErr)
+        .filter((val): val is number => val !== null);
+      const mape =
+        pctErrs.length > 0
+          ? pctErrs.reduce((a, b) => a + b, 0) / pctErrs.length
+          : 0;
+
+      let mdape = 0;
+      if (pctErrs.length > 0) {
+        const sortedPct = [...pctErrs].sort((a, b) => a - b);
+        const mid = Math.floor(sortedPct.length / 2);
+        mdape =
+          sortedPct.length % 2 !== 0
+            ? sortedPct[mid]
+            : (sortedPct[mid - 1] + sortedPct[mid]) / 2;
+      }
+
+      const coverage = pts.filter((p) => p.isCovered).length / n;
+
+      horizonLabels.push(bin.label);
+      mseList.push(mse);
+      rmseList.push(rmse);
+      maeList.push(mae);
+      mapeList.push(mape);
+      mdapeList.push(mdape);
+      coverageList.push(coverage);
+    }
 
     const metrics: PerformanceMetrics = {
-      horizon: [horizonDaysStr],
-      mse: [mse],
-      rmse: [rmse],
-      mae: [mae],
-      mape: [mape],
-      mdape: [mdape],
-      coverage: [coverage],
+      horizon: horizonLabels,
+      mse: mseList,
+      rmse: rmseList,
+      mae: maeList,
+      mape: mapeList,
+      mdape: mdapeList,
+      coverage: coverageList,
     };
 
     return {
