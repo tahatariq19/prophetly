@@ -1,44 +1,41 @@
 # Prophetly
 
-A modern, dark-themed time series forecasting application using **Facebook Prophet**, **FastAPI**, and **React**.
+Prophetly is a privacy-first time series forecasting app. It runs Facebook Prophet directly in your browser using WebAssembly. Your CSV data stays on your machine, and no calculations rely on a remote backend server.
 
-## Project Structure
+## Features
 
-- **frontend/**: React application (Vite, Tailwind, Recharts).
-- **backend/**: Python API (FastAPI, Prophet).
-- **scripts/**: Utility scripts (e.g., favicon generation).
+- **100% Local & Private**: All data parsing and model fitting happen inside background Web Workers using WebAssembly.
+- **Interactive Visualizations**: View forecast predictions, uncertainty bounds, decomposed trends, seasonalities, and changepoints.
+- **Smart Cross-Validation**: Evaluate model performance with rolling historical cutoffs, metrics (RMSE, MAE, MAPE, MDAPE, Coverage), and cancellation controls.
+- **Presets & Custom Settings**: Choose starting presets or fine-tune growth models, prior scales, and interval widths.
+- **Local History & Exports**: Store past runs locally in your browser and export results to CSV, JSON, or PNG chart images.
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
-- Node.js (v18+)
-- Python (v3.9+)
+- Node.js (v18.20.0 or newer)
+- npm (v9.0.0 or newer)
 
-### Running Locally
+### Development
 
-1. **Backend**:
+1. Install dependencies:
 
    ```bash
-   cd backend
-   python -m venv .venv
-
-   # Linux & MacOS
-   .venv/bin/activate
-
-   # Windows
-   .venv\Scripts\Activate.ps1
-   
-   pip install -r requirements.txt
-   uvicorn main:app --reload
+   npm install
    ```
 
-2. **Frontend**:
+2. Start the local development server:
 
    ```bash
-   cd frontend
-   npm install
    npm run dev
    ```
 
-Access the app at `http://localhost:5173`.
+3. Open `http://localhost:5173` in your browser.
+
+## Available scripts
+
+- `npm run dev` — Starts Vite dev server with HMR.
+- `npm run build` — Compiles TypeScript and bundles production assets including WASM binaries.
+- `npm run preview` — Serves the production build locally.
+- `npm run lint` — Runs Biome code checks.
