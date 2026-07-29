@@ -90,8 +90,9 @@ export function StepConfigure({
       cvParams.initialPct ?? 0.6,
       cvParams.horizonPct ?? 0.2,
       cvParams.periodPct ?? 0.2,
+      forecastParams.freq,
     );
-  }, [totalDays, cvParams.initialPct, cvParams.horizonPct, cvParams.periodPct]);
+  }, [totalDays, cvParams.initialPct, cvParams.horizonPct, cvParams.periodPct, forecastParams.freq]);
 
   useEffect(() => {
     fetchCountryMap()
@@ -108,7 +109,7 @@ export function StepConfigure({
 
   const handleStep2InitialChange = (val: number | readonly number[]) => {
     const num = Array.isArray(val) ? val[0] : (val as number);
-    const updated = constrainCVSplit(totalDays, num, cvSplit.horizonPct);
+    const updated = constrainCVSplit(totalDays, num, cvSplit.horizonPct, undefined, forecastParams.freq);
     onCVParamsChange({
       initial: updated.initialStr,
       horizon: updated.horizonStr,
@@ -121,7 +122,7 @@ export function StepConfigure({
 
   const handleStep2HorizonChange = (val: number | readonly number[]) => {
     const num = Array.isArray(val) ? val[0] : (val as number);
-    const updated = constrainCVSplit(totalDays, cvSplit.initialPct, num);
+    const updated = constrainCVSplit(totalDays, cvSplit.initialPct, num, undefined, forecastParams.freq);
     onCVParamsChange({
       initial: updated.initialStr,
       horizon: updated.horizonStr,
@@ -139,6 +140,7 @@ export function StepConfigure({
       cvSplit.initialPct,
       cvSplit.horizonPct,
       num,
+      forecastParams.freq,
     );
     onCVParamsChange({
       initial: updated.initialStr,

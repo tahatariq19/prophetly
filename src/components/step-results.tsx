@@ -61,6 +61,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { exportForecastCSV } from "@/lib/csv";
+import { formatHorizonLabel } from "@/lib/cv-helper";
 import type { CVParams } from "@/lib/state";
 import type {
   CrossValidationResponse,
@@ -949,7 +950,7 @@ export function StepResults({
                       {cvResults.metrics.horizon.map((h, i) => (
                         <TableRow key={i}>
                           <TableCell className="font-mono text-xs font-semibold">
-                            {h}
+                            {formatHorizonLabel(h)}
                           </TableCell>
                           <TableCell className="text-xs text-right">
                             {cvResults.metrics.mse[i]?.toFixed(2)}

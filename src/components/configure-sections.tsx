@@ -120,7 +120,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
             onConfigChange({ growth: val as "linear" | "logistic" | "flat" })
           }
         >
-          <SelectTrigger id="growth" className="h-9 text-xs">
+          <SelectTrigger id="growth" aria-label="Growth Model" className="h-9 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -174,7 +174,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
             })
           }
         >
-          <SelectTrigger id="seasonality_mode" className="h-9 text-xs">
+          <SelectTrigger id="seasonality_mode" aria-label="Seasonality Mode" className="h-9 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -195,6 +195,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
             </FieldLabel>
             <Input
               id="periods"
+              aria-label="Forecast Periods"
               type="number"
               min={1}
               max={3650}
@@ -218,7 +219,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
                 val && onForecastParamsChange({ freq: val })
               }
             >
-              <SelectTrigger id="freq" className="h-9 text-xs">
+              <SelectTrigger id="freq" aria-label="Frequency" className="h-9 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -257,7 +258,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
             })
           }
         >
-          <SelectTrigger id="country_holidays" className="h-9 text-xs">
+          <SelectTrigger id="country_holidays" aria-label="Built-in Country Holidays" className="h-9 text-xs">
             <SelectValue placeholder="Select country..." />
           </SelectTrigger>
           <SelectContent className="max-h-56">
@@ -349,7 +350,7 @@ export const CVSplitSection = memo(function CVSplitSection({
               Initial Training
             </Label>
             <span className="font-mono text-muted-foreground text-[11px]">
-              {cvSplit.initialStr} ({(cvSplit.initialPct * 100).toFixed(0)}%)
+              {cvSplit.initialLabel || cvSplit.initialStr} ({(cvSplit.initialPct * 100).toFixed(0)}%)
             </span>
           </div>
           <Slider
@@ -368,7 +369,7 @@ export const CVSplitSection = memo(function CVSplitSection({
               Forecast Horizon
             </Label>
             <span className="font-mono text-muted-foreground text-[11px]">
-              {cvSplit.horizonStr} ({(cvSplit.horizonPct * 100).toFixed(0)}%)
+              {cvSplit.horizonLabel || cvSplit.horizonStr} ({(cvSplit.horizonPct * 100).toFixed(0)}%)
             </span>
           </div>
           <Slider
@@ -387,7 +388,7 @@ export const CVSplitSection = memo(function CVSplitSection({
               Cutoff Step Period
             </Label>
             <span className="font-mono text-muted-foreground text-[11px]">
-              {cvSplit.periodStr} ({(cvSplit.periodPct * 100).toFixed(0)}%)
+              {cvSplit.periodLabel || cvSplit.periodStr} ({(cvSplit.periodPct * 100).toFixed(0)}%)
             </span>
           </div>
           <Slider

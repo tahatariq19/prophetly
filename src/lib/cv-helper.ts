@@ -11,6 +11,9 @@ export interface SmartCVSplit {
   initialStr: string;
   horizonStr: string;
   periodStr: string;
+  initialLabel: string;
+  horizonLabel: string;
+  periodLabel: string;
 }
 
 export function calculateTotalDays(data: DataPoint[]): number {
@@ -27,6 +30,54 @@ export function calculateTotalDays(data: DataPoint[]): number {
   return Math.max(diffDays, 14);
 }
 
+export function formatDaysWithFreq(days: number, freqCode: string = "D"): string {
+  if (days <= 0) return `${days} days`;
+  if (freqCode === "M") {
+    const months = Math.round(days / 30.4375);
+    if (months >= 1) {
+      return `${months} month${months > 1 ? "s" : ""} (~${days} days)`;
+    }
+  } else if (freqCode === "W") {
+    const weeks = Math.round(days / 7);
+    if (weeks >= 1) {
+      return `${weeks} week${weeks > 1 ? "s" : ""} (~${days} days)`;
+    }
+  } else if (freqCode === "Y") {
+    const years = (days / 365.25).toFixed(1).replace(/\.0$/, "");
+    if (Number(years) >= 1) {
+      return `${years} year${years !== "1" ? "s" : ""} (~${days} days)`;
+    }
+  } else if (freqCode === "H") {
+    const hours = days * 24;
+    return `${hours} hours (${days} days)`;
+  }
+  return `${days} days`;
+}
+
+export function formatHorizonLabel(horizonStr: string, freqCode: string = "D"): string {
+  if (!horizonStr) return horizonStr;
+  const match = horizonStr.match(/^(\d+(?:\.\d+)?)\s*days?/i);
+  if (!match) return horizonStr;
+  const days = Math.round(Number.parseFloat(match[1]));
+  if (freqCode === "M") {
+    const months = Math.round(days / 30.4375);
+    if (months >= 1) {
+      return `${days} days (${months} mo)`;
+    }
+  } else if (freqCode === "W") {
+    const weeks = Math.round(days / 7);
+    if (weeks >= 1) {
+      return `${days} days (${weeks} wk)`;
+    }
+  } else if (freqCode === "Y") {
+    const years = (days / 365.25).toFixed(1).replace(/\.0$/, "");
+    if (Number(years) >= 1) {
+      return `${days} days (${years} yr)`;
+    }
+  }
+  return horizonStr;
+}
+
 /**
  * Strict 3-way partition: Initial % + Horizon % + Step Period % = 100% EXPLICITLY ALWAYS.
  */
@@ -35,6 +86,7 @@ export function constrainCVSplit(
   targetInitialPct: number,
   targetHorizonPct: number,
   targetPeriodPct?: number,
+  freqCode: string = "D",
 ): SmartCVSplit {
   // 1. Clamp Initial between 30% and 85%
   let initialPct = Number(
@@ -87,7 +139,11 @@ export function constrainCVSplit(
     initialStr: `${initialDays} days`,
     horizonStr: `${horizonDays} days`,
     periodStr: `${periodDays} days`,
+    initialLabel: formatDaysWithFreq(initialDays, freqCode),
+    horizonLabel: formatDaysWithFreq(horizonDays, freqCode),
+    periodLabel: formatDaysWithFreq(periodDays, freqCode),
   };
 }
 
 export const computeCVSplitStrings = constrainCVSplit;
+

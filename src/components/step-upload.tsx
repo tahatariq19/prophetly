@@ -430,7 +430,7 @@ export function StepUpload({
                       );
                     }}
                   >
-                    <SelectTrigger id="col-ds" className="h-8 text-xs">
+                    <SelectTrigger id="col-ds" aria-label="Date Column (ds)" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -465,7 +465,7 @@ export function StepUpload({
                       );
                     }}
                   >
-                    <SelectTrigger id="col-y" className="h-8 text-xs">
+                    <SelectTrigger id="col-y" aria-label="Value Column (y)" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -500,7 +500,7 @@ export function StepUpload({
                       );
                     }}
                   >
-                    <SelectTrigger id="col-cap" className="h-8 text-xs">
+                    <SelectTrigger id="col-cap" aria-label="Capacity Column" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -539,7 +539,7 @@ export function StepUpload({
                       );
                     }}
                   >
-                    <SelectTrigger id="col-floor" className="h-8 text-xs">
+                    <SelectTrigger id="col-floor" aria-label="Floor Column" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -565,6 +565,7 @@ export function StepUpload({
                     </FieldLabel>
                     <Input
                       id="fixed-cap"
+                      aria-label="Fixed Cap Value"
                       type="number"
                       placeholder="e.g. 500"
                       value={fixedCap}
@@ -596,6 +597,7 @@ export function StepUpload({
                     </FieldLabel>
                     <Input
                       id="fixed-floor"
+                      aria-label="Fixed Floor Value"
                       type="number"
                       placeholder="e.g. 0"
                       value={fixedFloor}

@@ -165,14 +165,18 @@ export function parseCSVText(csvText: string): DataPoint[] {
 }
 
 export function detectFrequencyCode(data: { ds: string }[]): string {
-  if (data.length < 2) return "D";
+  if (!data || data.length < 2) return "D";
+  const timestamps = data
+    .map((d) => new Date(d.ds).getTime())
+    .filter((t) => !isNaN(t))
+    .sort((a, b) => a - b);
+
+  if (timestamps.length < 2) return "D";
+
   const diffs: number[] = [];
-  for (let i = 1; i < Math.min(data.length, 150); i++) {
-    const t1 = new Date(data[i - 1].ds).getTime();
-    const t2 = new Date(data[i].ds).getTime();
-    if (!isNaN(t1) && !isNaN(t2)) {
-      diffs.push(Math.abs(t2 - t1));
-    }
+  for (let i = 1; i < Math.min(timestamps.length, 150); i++) {
+    const diff = timestamps[i] - timestamps[i - 1];
+    if (diff > 0) diffs.push(diff);
   }
   if (diffs.length === 0) return "D";
   diffs.sort((a, b) => a - b);
