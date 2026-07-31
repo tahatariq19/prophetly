@@ -14,7 +14,7 @@ export function ThemeToggle() {
       aria-label="Toggle theme"
       className="size-9 rounded-full"
     >
-      {theme === "dark" ? <Sun /> : <Moon />}
+      {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
     </Button>
   );
 }

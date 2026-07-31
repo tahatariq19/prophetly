@@ -327,7 +327,7 @@ export function StepUpload({
     <div className="flex h-full w-full items-center justify-center p-4 md:p-6 overflow-y-auto">
       <Card className="w-full max-w-xl border-border/60 shadow-lg my-auto max-h-[88vh] flex flex-col backdrop-blur-md bg-card/95">
         <CardHeader className="text-center pb-2 shrink-0">
-          <CardTitle className="text-2xl font-bold tracking-tight">
+          <CardTitle className="text-2xl font-bold tracking-tight text-balance">
             Upload Time Series Data
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -340,7 +340,7 @@ export function StepUpload({
               variant="secondary"
               className="gap-1 text-[11px] py-0.5 px-2.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
             >
-              <ShieldCheck className="size-3 text-emerald-500" />
+              <ShieldCheck aria-hidden="true" className="size-3 text-emerald-500" />
               <span>Local Processing — Data never leaves your machine</span>
             </Badge>
           </div>
@@ -349,7 +349,7 @@ export function StepUpload({
         <CardContent className="flex-1 overflow-y-auto flex flex-col gap-4 p-5">
           {error && (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <AlertCircle aria-hidden="true" className="size-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -365,7 +365,7 @@ export function StepUpload({
             onKeyDown={handleKeyDown}
             aria-label="Upload CSV file dropzone"
             className={cn(
-              "group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-5 text-center transition-all focus:outline-none focus:ring-2 focus:ring-ring",
+              "group relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-5 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isDragging
                 ? "border-primary bg-primary/5 scale-[0.99]"
                 : data.length > 0
@@ -383,9 +383,9 @@ export function StepUpload({
             />
             <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-110">
               {data.length > 0 ? (
-                <CheckCircle2 className="size-5 text-primary" />
+                <CheckCircle2 aria-hidden="true" className="size-5 text-primary" />
               ) : (
-                <Upload className="size-5" />
+                <Upload aria-hidden="true" className="size-5" />
               )}
             </div>
             <div className="mt-2 flex flex-col gap-0.5">
@@ -404,7 +404,7 @@ export function StepUpload({
           {csvResult && (
             <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3.5 animate-in fade-in">
               <div className="flex items-center gap-2">
-                <Settings2 className="size-4 text-primary" />
+                <Settings2 aria-hidden="true" className="size-4 text-primary" />
                 <span className="text-xs font-semibold uppercase tracking-wider">
                   Column Mapping & Bounds
                 </span>
@@ -567,6 +567,7 @@ export function StepUpload({
                       id="fixed-cap"
                       aria-label="Fixed Cap Value"
                       type="number"
+                      autoComplete="off"
                       placeholder="e.g. 500"
                       value={fixedCap}
                       onChange={(e) => {
@@ -599,6 +600,7 @@ export function StepUpload({
                       id="fixed-floor"
                       aria-label="Fixed Floor Value"
                       type="number"
+                      autoComplete="off"
                       placeholder="e.g. 0"
                       value={fixedFloor}
                       onChange={(e) => {
@@ -627,7 +629,7 @@ export function StepUpload({
             <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm animate-in fade-in">
               <div className="flex items-center justify-between border-b pb-2">
                 <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="size-4 text-primary" />
+                  <FileSpreadsheet aria-hidden="true" className="size-4 text-primary" />
                   <span className="text-xs font-bold text-foreground">
                     {sampleDataLoaded
                       ? "Airline Passengers Dataset Summary"
@@ -636,7 +638,7 @@ export function StepUpload({
                 </div>
                 <Badge
                   variant="outline"
-                  className="font-mono text-[11px] bg-primary/5 text-primary border-primary/20"
+                  className="font-mono text-[11px] bg-primary/5 text-primary border-primary/20 tabular-nums"
                 >
                   {stats.detectedFreq}
                 </Badge>
@@ -648,7 +650,7 @@ export function StepUpload({
                   <span className="text-muted-foreground font-medium">
                     Rows
                   </span>
-                  <span className="font-mono font-bold text-foreground">
+                  <span className="font-mono font-bold text-foreground tabular-nums">
                     {stats.count.toLocaleString()}
                   </span>
                 </div>
@@ -656,7 +658,7 @@ export function StepUpload({
                   <span className="text-muted-foreground font-medium">
                     Min Target (y)
                   </span>
-                  <span className="font-mono font-bold text-foreground">
+                  <span className="font-mono font-bold text-foreground tabular-nums">
                     {stats.min.toFixed(2)}
                   </span>
                 </div>
@@ -664,7 +666,7 @@ export function StepUpload({
                   <span className="text-muted-foreground font-medium">
                     Max Target (y)
                   </span>
-                  <span className="font-mono font-bold text-foreground">
+                  <span className="font-mono font-bold text-foreground tabular-nums">
                     {stats.max.toFixed(2)}
                   </span>
                 </div>
@@ -672,7 +674,7 @@ export function StepUpload({
                   <span className="text-muted-foreground font-medium">
                     Mean ± Std
                   </span>
-                  <span className="font-mono font-bold text-foreground">
+                  <span className="font-mono font-bold text-foreground tabular-nums">
                     {stats.mean.toFixed(1)} ± {stats.std.toFixed(1)}
                   </span>
                 </div>
@@ -680,7 +682,7 @@ export function StepUpload({
 
               <div className="text-[11px] text-muted-foreground flex items-center justify-between">
                 <span>Date Span:</span>
-                <span className="font-mono text-foreground font-semibold">
+                <span className="font-mono text-foreground font-semibold tabular-nums">
                   {stats.startDate} → {stats.endDate}
                 </span>
               </div>
@@ -694,7 +696,7 @@ export function StepUpload({
                       variant="default"
                       className="py-2 text-[11px] bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200"
                     >
-                      <AlertTriangle className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <AlertTriangle aria-hidden="true" className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                       <AlertDescription>{w}</AlertDescription>
                     </Alert>
                   ))}
@@ -704,7 +706,7 @@ export function StepUpload({
               {/* Large Dataset Warning (>100,000 rows) */}
               {isLargeDataset && (
                 <Alert variant="destructive" className="py-2 text-[11px]">
-                  <AlertCircle className="size-4 shrink-0" />
+                  <AlertCircle aria-hidden="true" className="size-4 shrink-0" />
                   <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 w-full">
                     <span>
                       Dataset size is {stats.count.toLocaleString()} rows
@@ -736,7 +738,7 @@ export function StepUpload({
               {/* Preview Table */}
               <div className="flex flex-col gap-1 pt-1">
                 <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-                  <TableIcon className="size-3.5" />
+                  <TableIcon aria-hidden="true" className="size-3.5" />
                   <span>First 5 Preview Rows</span>
                 </div>
                 <div className="rounded-md border bg-background overflow-hidden max-h-32 overflow-y-auto">
@@ -754,10 +756,10 @@ export function StepUpload({
                     <TableBody>
                       {previewRows.map((row, idx) => (
                         <TableRow key={idx} className="h-5">
-                          <TableCell className="py-0.5 font-mono">
+                          <TableCell className="py-0.5 font-mono tabular-nums">
                             {row.ds}
                           </TableCell>
-                          <TableCell className="py-0.5 font-mono text-right">
+                          <TableCell className="py-0.5 font-mono text-right tabular-nums">
                             {row.y}
                           </TableCell>
                         </TableRow>
@@ -785,7 +787,7 @@ export function StepUpload({
             onClick={handleLoadSample}
             className="flex-1 text-xs"
           >
-            <Sparkles data-icon="inline-start" className="text-amber-500" />
+            <Sparkles aria-hidden="true" data-icon="inline-start" className="text-amber-500" />
             Try Sample Data
           </Button>
 
@@ -798,7 +800,7 @@ export function StepUpload({
             className="flex-1 text-xs font-semibold"
           >
             Continue to Config
-            <ArrowRight data-icon="inline-end" />
+            <ArrowRight aria-hidden="true" data-icon="inline-end" />
           </Button>
         </CardFooter>
       </Card>

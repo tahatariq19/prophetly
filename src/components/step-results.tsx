@@ -204,7 +204,7 @@ export function StepResults({
         <Empty className="max-w-md border bg-card/90 shadow-md">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <FileQuestion className="size-6 text-muted-foreground" />
+              <FileQuestion aria-hidden="true" className="size-6 text-muted-foreground" />
             </EmptyMedia>
             <EmptyTitle>No Model Results Found</EmptyTitle>
             <EmptyDescription>
@@ -214,7 +214,7 @@ export function StepResults({
           </EmptyHeader>
           <EmptyContent>
             <Button type="button" onClick={onReset}>
-              <RefreshCw data-icon="inline-start" />
+              <RefreshCw aria-hidden="true" data-icon="inline-start" />
               Start Fresh
             </Button>
           </EmptyContent>
@@ -284,7 +284,7 @@ export function StepResults({
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b shrink-0 px-6 py-3.5 gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <CardTitle className="text-xl font-bold tracking-tight">
+              <CardTitle className="text-xl font-bold tracking-tight text-balance">
                 {activeResultsMode === "forecast" && forecastResults
                   ? "Forecast Results"
                   : "Cross-Validation Performance"}
@@ -294,9 +294,9 @@ export function StepResults({
               {executionTimeMs !== undefined && (
                 <Badge
                   variant="outline"
-                  className="font-mono text-xs gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5"
+                  className="font-mono text-xs gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 tabular-nums"
                 >
-                  <Clock className="size-3.5 text-emerald-500" />
+                  <Clock aria-hidden="true" className="size-3.5 text-emerald-500" />
                   Completed in {(executionTimeMs / 1000).toFixed(2)}s
                 </Badge>
               )}
@@ -348,7 +348,7 @@ export function StepResults({
               onClick={() => setIsCVDialogOpen(true)}
               className="text-xs h-8 font-semibold text-primary border-primary/40 hover:bg-primary/10"
             >
-              <Activity data-icon="inline-start" />
+              <Activity aria-hidden="true" data-icon="inline-start" />
               {cvResults ? "Configure CV Split" : "Run Cross-Validation"}
             </Button>
 
@@ -360,7 +360,7 @@ export function StepResults({
                 onClick={onRunForecast}
                 className="text-xs h-8 font-semibold text-primary border-primary/40 hover:bg-primary/10"
               >
-                <Play data-icon="inline-start" className="fill-current" />
+                <Play aria-hidden="true" data-icon="inline-start" className="fill-current" />
                 Run Forecast
               </Button>
             )}
@@ -376,7 +376,7 @@ export function StepResults({
                 title="Export predictions to CSV"
                 className="text-xs h-7 px-2 font-semibold"
               >
-                <Download className="size-3.5 mr-1" />
+                <Download aria-hidden="true" className="size-3.5 mr-1" />
                 CSV
               </Button>
               <Button
@@ -387,7 +387,7 @@ export function StepResults({
                 title="Export model data & metrics to JSON"
                 className="text-xs h-7 px-2 font-semibold"
               >
-                <FileJson className="size-3.5 mr-1 text-blue-500" />
+                <FileJson aria-hidden="true" className="size-3.5 mr-1 text-blue-500" />
                 JSON
               </Button>
               <Button
@@ -398,7 +398,7 @@ export function StepResults({
                 title="Download chart image as PNG"
                 className="text-xs h-7 px-2 font-semibold"
               >
-                <FileImage className="size-3.5 mr-1 text-emerald-500" />
+                <FileImage aria-hidden="true" className="size-3.5 mr-1 text-emerald-500" />
                 PNG
               </Button>
             </div>
@@ -412,6 +412,7 @@ export function StepResults({
                 className="text-xs h-8 font-semibold"
               >
                 <History
+                  aria-hidden="true"
                   data-icon="inline-start"
                   className="size-3.5 text-primary"
                 />
@@ -425,7 +426,7 @@ export function StepResults({
               onClick={onReset}
               className="text-xs h-8"
             >
-              <RefreshCw data-icon="inline-start" />
+              <RefreshCw aria-hidden="true" data-icon="inline-start" />
               Start Fresh
             </Button>
           </div>
@@ -450,21 +451,21 @@ export function StepResults({
                   value="chart"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <ChartIcon data-icon="inline-start" />
+                  <ChartIcon aria-hidden="true" data-icon="inline-start" />
                   Forecast Chart
                 </TabsTrigger>
                 <TabsTrigger
                   value="components"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <Layers data-icon="inline-start" />
+                  <Layers aria-hidden="true" data-icon="inline-start" />
                   Components Breakdown ({componentKeys.length})
                 </TabsTrigger>
                 <TabsTrigger
                   value="changepoints"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <Calendar data-icon="inline-start" />
+                  <Calendar aria-hidden="true" data-icon="inline-start" />
                   Changepoints ({forecastResults.changepoints.length})
                 </TabsTrigger>
               </TabsList>
@@ -483,14 +484,14 @@ export function StepResults({
                       onClick={() => setShowChangepoints(!showChangepoints)}
                       className="h-7 text-xs font-semibold gap-1 px-2.5 border-border/60"
                     >
-                      <Calendar className="size-3.5 text-primary" />
+                      <Calendar aria-hidden="true" className="size-3.5 text-primary" />
                       {showChangepoints
                         ? "Hide Changepoints"
                         : "Show Changepoints"}
                     </Button>
                     {showChangepoints &&
                       forecastResults.changepoints.length > 0 && (
-                        <span className="text-[11px] font-mono text-muted-foreground">
+                        <span className="text-[11px] font-mono text-muted-foreground tabular-nums">
                           ({forecastResults.changepoints.length} detected
                           reference lines)
                         </span>
@@ -691,7 +692,7 @@ export function StepResults({
                     <Badge
                       key={idx}
                       variant="outline"
-                      className="font-mono text-xs py-1 px-2.5"
+                      className="font-mono text-xs py-1 px-2.5 tabular-nums"
                     >
                       {cp}
                     </Badge>
@@ -706,34 +707,34 @@ export function StepResults({
                   value="overview"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <TrendingUp data-icon="inline-start" />
+                  <TrendingUp aria-hidden="true" data-icon="inline-start" />
                   Error Metrics (RMSE / MAE / MSE)
                 </TabsTrigger>
                 <TabsTrigger
                   value="mape"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <Percent data-icon="inline-start" />% Errors (MAPE & MDAPE)
+                  <Percent aria-hidden="true" data-icon="inline-start" />% Errors (MAPE & MDAPE)
                 </TabsTrigger>
                 <TabsTrigger
                   value="coverage"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <CheckCircle2 data-icon="inline-start" />
+                  <CheckCircle2 aria-hidden="true" data-icon="inline-start" />
                   Prediction Coverage
                 </TabsTrigger>
                 <TabsTrigger
                   value="cutoffs"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <ChartIcon data-icon="inline-start" />
+                  <ChartIcon aria-hidden="true" data-icon="inline-start" />
                   Actual vs Predicted
                 </TabsTrigger>
                 <TabsTrigger
                   value="table"
                   className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-xs font-semibold gap-1.5"
                 >
-                  <BarChart3 data-icon="inline-start" />
+                  <BarChart3 aria-hidden="true" data-icon="inline-start" />
                   Metrics Table
                 </TabsTrigger>
               </TabsList>
@@ -949,25 +950,25 @@ export function StepResults({
                     <TableBody>
                       {cvResults.metrics.horizon.map((h, i) => (
                         <TableRow key={i}>
-                          <TableCell className="font-mono text-xs font-semibold">
+                          <TableCell className="font-mono text-xs font-semibold tabular-nums">
                             {formatHorizonLabel(h)}
                           </TableCell>
-                          <TableCell className="text-xs text-right">
+                          <TableCell className="text-xs text-right tabular-nums">
                             {cvResults.metrics.mse[i]?.toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-xs text-right">
+                          <TableCell className="text-xs text-right tabular-nums">
                             {cvResults.metrics.rmse[i]?.toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-xs text-right">
+                          <TableCell className="text-xs text-right tabular-nums">
                             {cvResults.metrics.mae[i]?.toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-xs text-right">
+                          <TableCell className="text-xs text-right tabular-nums">
                             {(cvResults.metrics.mape[i] * 100)?.toFixed(2)}%
                           </TableCell>
-                          <TableCell className="text-xs text-right">
+                          <TableCell className="text-xs text-right tabular-nums">
                             {(cvResults.metrics.mdape[i] * 100)?.toFixed(2)}%
                           </TableCell>
-                          <TableCell className="text-xs text-right font-semibold">
+                          <TableCell className="text-xs text-right font-semibold tabular-nums">
                             {(cvResults.metrics.coverage[i] * 100)?.toFixed(1)}%
                           </TableCell>
                         </TableRow>

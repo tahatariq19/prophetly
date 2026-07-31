@@ -162,7 +162,7 @@ export default function App() {
     if (state.actionType === "forecast") {
       dispatch({
         type: "START_LOADING",
-        payload: "Fitting Prophet model & generating forecast...",
+        payload: "Fitting Prophet model & generating forecast…",
       });
       try {
         const result = await fetchForecast({
@@ -206,7 +206,7 @@ export default function App() {
     } else if (state.actionType === "cross_validation") {
       dispatch({
         type: "START_LOADING",
-        payload: "Running cross-validation metrics across cutoffs...",
+        payload: "Running cross-validation metrics across cutoffs…",
         progress: 0,
       });
       try {
@@ -221,7 +221,7 @@ export default function App() {
           (percent, step) => {
             dispatch({
               type: "START_LOADING",
-              payload: `Running cross-validation (${percent}% - ${step})...`,
+              payload: `Running cross-validation (${percent}% - ${step})…`,
               progress: percent,
             });
           },
@@ -255,7 +255,7 @@ export default function App() {
     } else if (state.actionType === "both") {
       dispatch({
         type: "START_LOADING",
-        payload: "Fitting Prophet model & running parallel cross-validation...",
+        payload: "Fitting Prophet model & running parallel cross-validation…",
         progress: 0,
       });
       try {
@@ -277,7 +277,7 @@ export default function App() {
             (percent, step) => {
               dispatch({
                 type: "START_LOADING",
-                payload: `Running cross-validation (${percent}% - ${step})...`,
+                payload: `Running cross-validation (${percent}% - ${step})…`,
                 progress: percent,
               });
             },
@@ -330,7 +330,7 @@ export default function App() {
     const startTime = performance.now();
     dispatch({
       type: "START_LOADING",
-      payload: "Running cross-validation metrics across cutoffs...",
+      payload: "Running cross-validation metrics across cutoffs…",
       progress: 0,
     });
     try {
@@ -345,7 +345,7 @@ export default function App() {
         (percent, step) => {
           dispatch({
             type: "START_LOADING",
-            payload: `Running cross-validation (${percent}% - ${step})...`,
+            payload: `Running cross-validation (${percent}% - ${step})…`,
             progress: percent,
           });
         },
@@ -366,7 +366,7 @@ export default function App() {
     const startTime = performance.now();
     dispatch({
       type: "START_LOADING",
-      payload: "Fitting Prophet model & generating forecast...",
+      payload: "Fitting Prophet model & generating forecast…",
     });
     try {
       const result = await fetchForecast({
@@ -408,7 +408,7 @@ export default function App() {
             onClick={() => setIsHistoryOpen(true)}
             className="h-8 gap-1.5 text-xs font-semibold bg-background/80 backdrop-blur-xs border-border/60 shadow-xs cursor-pointer"
           >
-            <History className="size-3.5 text-primary" />
+            <History aria-hidden="true" className="size-3.5 text-primary" />
             History
           </Button>
           <ThemeToggle />
@@ -487,7 +487,7 @@ export default function App() {
 
         {/* Touchpoint 1: Footer banner */}
         <footer className="py-2 px-4 text-center border-t border-border/40 text-xs text-muted-foreground bg-muted/20 flex items-center justify-center gap-1.5 shrink-0">
-          <ShieldCheck className="size-4 text-emerald-500" />
+          <ShieldCheck aria-hidden="true" className="size-4 text-emerald-500" />
           <span className="font-medium">
             100% Client-Side WASM — Zero Data Leaves Your Browser
           </span>

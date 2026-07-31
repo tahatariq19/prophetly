@@ -168,7 +168,7 @@ export function StepConfigure({
         <CardHeader className="pb-3 border-b shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-xl font-bold tracking-tight">
+              <CardTitle className="text-xl font-bold tracking-tight text-balance">
                 Configure Model
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground mt-0.5">
@@ -191,7 +191,7 @@ export function StepConfigure({
                   className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
                 >
                   {actionType === "forecast" && (
-                    <Check data-icon="inline-start" className="stroke-[3]" />
+                    <Check aria-hidden="true" data-icon="inline-start" className="stroke-[3]" />
                   )}
                   Forecast
                 </ToggleGroupItem>
@@ -201,7 +201,7 @@ export function StepConfigure({
                   className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
                 >
                   {actionType === "cross_validation" && (
-                    <Check data-icon="inline-start" className="stroke-[3]" />
+                    <Check aria-hidden="true" data-icon="inline-start" className="stroke-[3]" />
                   )}
                   Cross-Validate
                 </ToggleGroupItem>
@@ -212,6 +212,7 @@ export function StepConfigure({
                 >
                   {actionType === "both" && (
                     <Zap
+                      aria-hidden="true"
                       data-icon="inline-start"
                       className="text-amber-500 fill-amber-500"
                     />
@@ -228,7 +229,7 @@ export function StepConfigure({
           <div className="flex flex-col gap-2 rounded-xl border bg-muted/20 p-3.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Sparkles className="size-3.5 text-amber-500" />
+                <Sparkles aria-hidden="true" className="size-3.5 text-amber-500" />
                 Model Config Presets
               </span>
             </div>
@@ -251,7 +252,7 @@ export function StepConfigure({
                 }}
                 className="flex flex-col items-center justify-center h-auto py-2 px-1 text-xs gap-1 border-border/60 hover:border-primary/50"
               >
-                <Zap className="size-4 text-amber-500" />
+                <Zap aria-hidden="true" className="size-4 text-amber-500" />
                 <span className="font-bold text-foreground">Quick</span>
                 <span className="text-[10px] text-muted-foreground font-normal">
                   Additive & Fast
@@ -280,7 +281,7 @@ export function StepConfigure({
                 }}
                 className="flex flex-col items-center justify-center h-auto py-2 px-1 text-xs gap-1 border-border/60 hover:border-primary/50"
               >
-                <Sliders className="size-4 text-blue-500" />
+                <Sliders aria-hidden="true" className="size-4 text-blue-500" />
                 <span className="font-bold text-foreground">Detailed</span>
                 <span className="text-[10px] text-muted-foreground font-normal">
                   Multiplicative
@@ -306,7 +307,7 @@ export function StepConfigure({
                 }}
                 className="flex flex-col items-center justify-center h-auto py-2 px-1 text-xs gap-1 border-border/60 hover:border-primary/50"
               >
-                <Shield className="size-4 text-emerald-500" />
+                <Shield aria-hidden="true" className="size-4 text-emerald-500" />
                 <span className="font-bold text-foreground">Conservative</span>
                 <span className="text-[10px] text-muted-foreground font-normal">
                   Tighter priors
@@ -356,7 +357,7 @@ export function StepConfigure({
             onClick={onBack}
             className="text-xs"
           >
-            <ArrowLeft data-icon="inline-start" />
+            <ArrowLeft aria-hidden="true" data-icon="inline-start" />
             Back
           </Button>
           <Button
@@ -364,7 +365,7 @@ export function StepConfigure({
             onClick={onSubmit}
             className="text-xs font-bold"
           >
-            <Play data-icon="inline-start" className="fill-current" />
+            <Play aria-hidden="true" data-icon="inline-start" className="fill-current" />
             {actionType === "forecast"
               ? "Generate Forecast"
               : actionType === "cross_validation"

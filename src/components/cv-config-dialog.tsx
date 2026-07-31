@@ -86,10 +86,10 @@ export function CVConfigDialog({
         <DialogHeader>
           <div className="flex items-center justify-between gap-2 pr-6">
             <div className="flex items-center gap-2">
-              <Activity className="size-5 text-primary" />
+              <Activity aria-hidden="true" className="size-5 text-primary" />
               <DialogTitle>Configure Cross-Validation Split</DialogTitle>
             </div>
-            <Badge variant="outline" className="font-mono text-xs">
+            <Badge variant="outline" className="font-mono text-xs tabular-nums">
               Span: {totalDays} days
             </Badge>
           </div>
@@ -104,7 +104,7 @@ export function CVConfigDialog({
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between text-xs font-semibold text-muted-foreground">
               <span>Timeline Partition (100% Total)</span>
-              <span className="font-mono">
+              <span className="font-mono tabular-nums">
                 {split.initialDays + split.horizonDays + split.periodDays} /{" "}
                 {totalDays} days
               </span>
@@ -112,7 +112,7 @@ export function CVConfigDialog({
 
             <div className="h-4 w-full rounded-md overflow-hidden flex bg-muted p-0.5 border border-border/40 gap-0.5">
               <div
-                className="h-full bg-primary rounded-xs transition-all duration-200 flex items-center justify-center text-[10px] font-bold text-primary-foreground overflow-hidden"
+                className="h-full bg-primary rounded-xs transition-[width] duration-200 flex items-center justify-center text-[10px] font-bold text-primary-foreground overflow-hidden"
                 style={{ width: `${split.initialPct * 100}%` }}
                 title={`Initial Training: ${(split.initialPct * 100).toFixed(0)}%`}
               >
@@ -120,7 +120,7 @@ export function CVConfigDialog({
                   `Training ${(split.initialPct * 100).toFixed(0)}%`}
               </div>
               <div
-                className="h-full bg-chart-2 rounded-xs transition-all duration-200 flex items-center justify-center text-[10px] font-bold text-background overflow-hidden"
+                className="h-full bg-chart-2 rounded-xs transition-[width] duration-200 flex items-center justify-center text-[10px] font-bold text-background overflow-hidden"
                 style={{ width: `${split.horizonPct * 100}%` }}
                 title={`Forecast Horizon: ${(split.horizonPct * 100).toFixed(0)}%`}
               >
@@ -128,7 +128,7 @@ export function CVConfigDialog({
                   `Horizon ${(split.horizonPct * 100).toFixed(0)}%`}
               </div>
               <div
-                className="h-full bg-muted-foreground/40 rounded-xs transition-all duration-200 flex items-center justify-center text-[10px] text-foreground font-semibold overflow-hidden"
+                className="h-full bg-muted-foreground/40 rounded-xs transition-[width] duration-200 flex items-center justify-center text-[10px] text-foreground font-semibold overflow-hidden"
                 style={{ width: `${split.periodPct * 100}%` }}
                 title={`Cutoff Step Period: ${(split.periodPct * 100).toFixed(0)}%`}
               >
@@ -167,7 +167,7 @@ export function CVConfigDialog({
                 <FieldLabel className="font-semibold">
                   Initial Training Split
                 </FieldLabel>
-                <span className="font-mono text-muted-foreground">
+                <span className="font-mono text-muted-foreground tabular-nums">
                   {split.initialLabel || split.initialStr} ({(split.initialPct * 100).toFixed(0)}%)
                 </span>
               </div>
@@ -187,7 +187,7 @@ export function CVConfigDialog({
                 <FieldLabel className="font-semibold">
                   Forecast Horizon
                 </FieldLabel>
-                <span className="font-mono text-muted-foreground">
+                <span className="font-mono text-muted-foreground tabular-nums">
                   {split.horizonLabel || split.horizonStr} ({(split.horizonPct * 100).toFixed(0)}%)
                 </span>
               </div>
@@ -207,7 +207,7 @@ export function CVConfigDialog({
                 <FieldLabel className="font-semibold">
                   Cutoff Step Period
                 </FieldLabel>
-                <span className="font-mono text-muted-foreground">
+                <span className="font-mono text-muted-foreground tabular-nums">
                   {split.periodLabel || split.periodStr} ({(split.periodPct * 100).toFixed(0)}%)
                 </span>
               </div>
@@ -237,7 +237,7 @@ export function CVConfigDialog({
             onClick={handleConfirm}
             className="text-xs font-bold"
           >
-            <Play data-icon="inline-start" className="fill-current" />
+            <Play aria-hidden="true" data-icon="inline-start" className="fill-current" />
             Run Cross-Validation
           </Button>
         </DialogFooter>

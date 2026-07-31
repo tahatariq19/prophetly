@@ -83,7 +83,7 @@ export const initialAppState: AppState = {
     periodPct: 0.2,
   },
   isLoading: false,
-  loadingMessage: "Fitting model...",
+  loadingMessage: "Fitting model…",
   loadingProgress: undefined,
   forecastResults: null,
   cvResults: null,
@@ -181,7 +181,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         isLoading: true,
-        loadingMessage: action.payload || "Processing model request...",
+        loadingMessage: action.payload || "Processing model request…",
         loadingProgress: action.progress,
         error: null,
       };

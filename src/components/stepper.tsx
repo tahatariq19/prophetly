@@ -39,7 +39,7 @@ export function Stepper({
               aria-current={isActive ? "step" : undefined}
               onClick={() => isClickable && onStepClick(s.number)}
               className={cn(
-                "group h-8 px-3 rounded-full text-xs font-medium transition-all gap-2",
+                "group h-8 px-3 rounded-full text-xs font-medium transition-colors gap-2",
                 isActive && "shadow-sm",
                 !isClickable && !isActive && "opacity-60 cursor-not-allowed",
               )}
@@ -55,7 +55,7 @@ export function Stepper({
                 )}
               >
                 {isCompleted && !isActive ? (
-                  <Check data-icon="inline-start" className="stroke-[3]" />
+                  <Check aria-hidden="true" data-icon="inline-start" className="stroke-[3]" />
                 ) : (
                   s.number
                 )}

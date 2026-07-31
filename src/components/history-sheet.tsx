@@ -93,7 +93,7 @@ export function HistorySheet({
         <SheetHeader className="pb-4 border-b shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <History className="size-5 text-primary" />
+              <History aria-hidden="true" className="size-5 text-primary" />
               <SheetTitle className="text-lg font-bold">
                 Forecast History
               </SheetTitle>
@@ -106,7 +106,7 @@ export function HistorySheet({
                 onClick={handleClear}
                 className="text-xs text-destructive hover:bg-destructive/10 h-8 gap-1"
               >
-                <Trash2 className="size-3.5" />
+                <Trash2 aria-hidden="true" className="size-3.5" />
                 Clear History
               </Button>
             )}
@@ -120,7 +120,7 @@ export function HistorySheet({
         <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
           {history.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center p-6 border border-dashed rounded-xl bg-muted/20">
-              <History className="size-10 text-muted-foreground/50 mb-3" />
+              <History aria-hidden="true" className="size-10 text-muted-foreground/50 mb-3" />
               <p className="text-sm font-semibold text-foreground">
                 No History Yet
               </p>
@@ -150,7 +150,7 @@ export function HistorySheet({
               return (
                 <Card
                   key={entry.id}
-                  className="border-border/60 shadow-xs hover:border-primary/40 transition-all bg-card/80"
+                  className="border-border/60 shadow-xs hover:border-primary/40 transition-colors bg-card/80"
                 >
                   <CardContent className="p-4 flex flex-col gap-3">
                     {/* Header line */}
@@ -158,12 +158,12 @@ export function HistorySheet({
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-xs text-foreground flex items-center gap-1">
-                            <Database className="size-3.5 text-primary" />
+                            <Database aria-hidden="true" className="size-3.5 text-primary" />
                             {entry.datasetName}
                           </span>
                           <Badge
                             variant="secondary"
-                            className="text-[10px] px-1.5 py-0 font-mono"
+                            className="text-[10px] px-1.5 py-0 font-mono tabular-nums"
                           >
                             {entry.rowCount} rows
                           </Badge>
@@ -178,7 +178,7 @@ export function HistorySheet({
                         </div>
                         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Calendar className="size-3" />
+                            <Calendar aria-hidden="true" className="size-3" />
                             {new Date(entry.timestamp).toLocaleString(
                               undefined,
                               {
@@ -190,8 +190,8 @@ export function HistorySheet({
                             )}
                           </span>
                           {entry.executionTimeMs !== undefined && (
-                            <span className="flex items-center gap-1 font-mono">
-                              <Clock className="size-3" />
+                            <span className="flex items-center gap-1 font-mono tabular-nums">
+                              <Clock aria-hidden="true" className="size-3" />
                               {entry.executionTimeMs < 1000
                                 ? `${entry.executionTimeMs}ms`
                                 : `${(entry.executionTimeMs / 1000).toFixed(2)}s`}
@@ -207,8 +207,9 @@ export function HistorySheet({
                         onClick={() => handleDelete(entry.id)}
                         className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
                         title="Delete entry"
+                        aria-label="Delete entry"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 aria-hidden="true" className="size-3.5" />
                       </Button>
                     </div>
 
@@ -257,7 +258,7 @@ export function HistorySheet({
                             <span className="text-muted-foreground font-medium">
                               RMSE:
                             </span>
-                            <span className="font-mono font-semibold text-primary">
+                            <span className="font-mono font-semibold text-primary tabular-nums">
                               {rmse}
                             </span>
                           </div>
@@ -267,7 +268,7 @@ export function HistorySheet({
                             <span className="text-muted-foreground font-medium">
                               MAE:
                             </span>
-                            <span className="font-mono font-semibold">
+                            <span className="font-mono font-semibold tabular-nums">
                               {mae}
                             </span>
                           </div>
@@ -277,7 +278,7 @@ export function HistorySheet({
                             <span className="text-muted-foreground font-medium">
                               MAPE:
                             </span>
-                            <span className="font-mono font-semibold">
+                            <span className="font-mono font-semibold tabular-nums">
                               {mape}
                             </span>
                           </div>
@@ -287,7 +288,7 @@ export function HistorySheet({
                             <span className="text-muted-foreground font-medium">
                               Coverage:
                             </span>
-                            <span className="font-mono font-semibold">
+                            <span className="font-mono font-semibold tabular-nums">
                               {coverage}
                             </span>
                           </div>
@@ -303,7 +304,7 @@ export function HistorySheet({
                       onClick={() => handleSelect(entry)}
                       className="w-full text-xs gap-1.5 h-8 font-semibold mt-1"
                     >
-                      <RotateCcw className="size-3.5 text-primary" />
+                      <RotateCcw aria-hidden="true" className="size-3.5 text-primary" />
                       Re-run / Load Config
                     </Button>
                   </CardContent>

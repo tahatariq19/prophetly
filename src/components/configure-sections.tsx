@@ -66,7 +66,7 @@ export const ResetIndicator = memo(function ResetIndicator({
       onClick={onReset}
       className="size-5 rounded-full text-muted-foreground hover:text-primary hover:bg-muted/80 p-0"
     >
-      <RotateCcw data-icon="inline-start" className="size-3" />
+      <RotateCcw aria-hidden="true" data-icon="inline-start" className="size-3" />
     </Button>
   );
 });
@@ -101,7 +101,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
             </FieldLabel>
             <Tooltip>
               <TooltipTrigger className="cursor-pointer">
-                <HelpCircle className="size-3.5 text-muted-foreground" />
+                <HelpCircle aria-hidden="true" className="size-3.5 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 Linear for standard trend, Logistic for bounded growth.
@@ -147,7 +147,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
             </FieldLabel>
             <Tooltip>
               <TooltipTrigger className="cursor-pointer">
-                <HelpCircle className="size-3.5 text-muted-foreground" />
+                <HelpCircle aria-hidden="true" className="size-3.5 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 Additive (+) or Multiplicative (×) variations.
@@ -197,6 +197,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
               id="periods"
               aria-label="Forecast Periods"
               type="number"
+              autoComplete="off"
               min={1}
               max={3650}
               value={forecastParams.periods}
@@ -259,7 +260,7 @@ export const GrowthSeasonalitySection = memo(function GrowthSeasonalitySection({
           }
         >
           <SelectTrigger id="country_holidays" aria-label="Built-in Country Holidays" className="h-9 text-xs">
-            <SelectValue placeholder="Select country..." />
+            <SelectValue placeholder="Select country…" />
           </SelectTrigger>
           <SelectContent className="max-h-56">
             <SelectGroup>
@@ -296,12 +297,12 @@ export const CVSplitSection = memo(function CVSplitSection({
     <div className="flex flex-col gap-4 rounded-lg border p-4 bg-muted/20">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Activity className="size-4 text-primary" />
+          <Activity aria-hidden="true" className="size-4 text-primary" />
           <span className="text-xs font-semibold uppercase tracking-wider">
             Smart Cross-Validation Split
           </span>
         </div>
-        <Badge variant="outline" className="font-mono text-[11px]">
+        <Badge variant="outline" className="font-mono text-[11px] tabular-nums">
           Span: {totalDays} days
         </Badge>
       </div>
@@ -309,7 +310,7 @@ export const CVSplitSection = memo(function CVSplitSection({
       <div className="flex flex-col gap-1.5">
         <div className="flex justify-between text-xs font-semibold text-muted-foreground">
           <span>Timeline Partition (100% Total)</span>
-          <span className="font-mono">
+          <span className="font-mono tabular-nums">
             {cvSplit.initialDays + cvSplit.horizonDays + cvSplit.periodDays} /{" "}
             {totalDays} days
           </span>
@@ -317,7 +318,7 @@ export const CVSplitSection = memo(function CVSplitSection({
 
         <div className="h-3.5 w-full rounded-md overflow-hidden flex bg-muted p-0.5 border border-border/40 gap-0.5">
           <div
-            className="h-full bg-primary rounded-xs transition-all duration-200 flex items-center justify-center text-[9px] font-bold text-primary-foreground overflow-hidden"
+            className="h-full bg-primary rounded-xs transition-[width] duration-200 flex items-center justify-center text-[9px] font-bold text-primary-foreground overflow-hidden"
             style={{ width: `${cvSplit.initialPct * 100}%` }}
             title={`Initial Training: ${(cvSplit.initialPct * 100).toFixed(0)}%`}
           >
@@ -325,7 +326,7 @@ export const CVSplitSection = memo(function CVSplitSection({
               `Training ${(cvSplit.initialPct * 100).toFixed(0)}%`}
           </div>
           <div
-            className="h-full bg-chart-2 rounded-xs transition-all duration-200 flex items-center justify-center text-[9px] font-bold text-background overflow-hidden"
+            className="h-full bg-chart-2 rounded-xs transition-[width] duration-200 flex items-center justify-center text-[9px] font-bold text-background overflow-hidden"
             style={{ width: `${cvSplit.horizonPct * 100}%` }}
             title={`Forecast Horizon: ${(cvSplit.horizonPct * 100).toFixed(0)}%`}
           >
@@ -333,7 +334,7 @@ export const CVSplitSection = memo(function CVSplitSection({
               `Horizon ${(cvSplit.horizonPct * 100).toFixed(0)}%`}
           </div>
           <div
-            className="h-full bg-muted-foreground/40 rounded-xs transition-all duration-200 flex items-center justify-center text-[9px] text-foreground font-semibold overflow-hidden"
+            className="h-full bg-muted-foreground/40 rounded-xs transition-[width] duration-200 flex items-center justify-center text-[9px] text-foreground font-semibold overflow-hidden"
             style={{ width: `${cvSplit.periodPct * 100}%` }}
             title={`Cutoff Step Period: ${(cvSplit.periodPct * 100).toFixed(0)}%`}
           >
@@ -349,7 +350,7 @@ export const CVSplitSection = memo(function CVSplitSection({
             <Label className="text-[11px] font-semibold">
               Initial Training
             </Label>
-            <span className="font-mono text-muted-foreground text-[11px]">
+            <span className="font-mono text-muted-foreground text-[11px] tabular-nums">
               {cvSplit.initialLabel || cvSplit.initialStr} ({(cvSplit.initialPct * 100).toFixed(0)}%)
             </span>
           </div>
@@ -368,7 +369,7 @@ export const CVSplitSection = memo(function CVSplitSection({
             <Label className="text-[11px] font-semibold">
               Forecast Horizon
             </Label>
-            <span className="font-mono text-muted-foreground text-[11px]">
+            <span className="font-mono text-muted-foreground text-[11px] tabular-nums">
               {cvSplit.horizonLabel || cvSplit.horizonStr} ({(cvSplit.horizonPct * 100).toFixed(0)}%)
             </span>
           </div>
@@ -387,7 +388,7 @@ export const CVSplitSection = memo(function CVSplitSection({
             <Label className="text-[11px] font-semibold">
               Cutoff Step Period
             </Label>
-            <span className="font-mono text-muted-foreground text-[11px]">
+            <span className="font-mono text-muted-foreground text-[11px] tabular-nums">
               {cvSplit.periodLabel || cvSplit.periodStr} ({(cvSplit.periodPct * 100).toFixed(0)}%)
             </span>
           </div>
@@ -439,7 +440,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
     <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <CalendarDays className="size-4 text-primary" />
+          <CalendarDays aria-hidden="true" className="size-4 text-primary" />
           <span className="text-xs font-semibold uppercase tracking-wider">
             Custom Holidays
           </span>
@@ -459,7 +460,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
               className="flex items-center justify-between rounded border bg-background px-3 py-1 text-xs"
             >
               <span className="font-semibold">{h.holiday}</span>
-              <span className="font-mono text-muted-foreground">
+              <span className="font-mono text-muted-foreground tabular-nums">
                 {h.ds} ([-{h.lower_window}, +{h.upper_window}])
               </span>
               <Button
@@ -470,7 +471,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
                 aria-label={`Remove holiday ${h.holiday}`}
                 className="size-6 text-destructive hover:bg-destructive/10 p-0"
               >
-                <Trash2 className="size-3" />
+                <Trash2 aria-hidden="true" className="size-3" />
               </Button>
             </div>
           ))}
@@ -481,6 +482,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
         <Input
           id="holiday-name"
           aria-label="Holiday Name"
+          autoComplete="off"
           placeholder="Holiday Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -490,6 +492,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
           id="holiday-date"
           aria-label="Holiday Date"
           type="date"
+          autoComplete="off"
           value={ds}
           onChange={(e) => setDs(e.target.value)}
           className="h-8 text-xs sm:col-span-1"
@@ -499,6 +502,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
             id="holiday-lower"
             aria-label="Holiday Lower Window"
             type="number"
+            autoComplete="off"
             placeholder="Lower"
             value={lower}
             onChange={(e) => setLower(parseInt(e.target.value, 10) || 0)}
@@ -508,6 +512,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
             id="holiday-upper"
             aria-label="Holiday Upper Window"
             type="number"
+            autoComplete="off"
             placeholder="Upper"
             value={upper}
             onChange={(e) => setUpper(parseInt(e.target.value, 10) || 0)}
@@ -521,7 +526,7 @@ export const CustomHolidaysSection = memo(function CustomHolidaysSection({
           disabled={!name || !ds}
           className="h-8 text-xs gap-1 sm:col-span-1"
         >
-          <Plus data-icon="inline-start" /> Add
+          <Plus aria-hidden="true" data-icon="inline-start" /> Add
         </Button>
       </div>
     </div>
@@ -598,17 +603,18 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
     <Collapsible open={isOpen} onOpenChange={onOpenChange}>
       <CollapsibleTrigger className="flex w-full items-center justify-between p-2 h-9 text-xs font-semibold text-muted-foreground hover:text-foreground rounded hover:bg-muted/50 cursor-pointer">
         <span className="flex items-center gap-2">
-          <SlidersHorizontal className="size-4" />
+          <SlidersHorizontal aria-hidden="true" className="size-4" />
           Advanced Model Settings
         </span>
         <ChevronDown
+          aria-hidden="true"
           className={`size-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 flex flex-col gap-5 animate-in fade-in">
         {/* Changepoints */}
         <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
-          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider text-pretty">
             Changepoints
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -617,7 +623,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 <FieldLabel className="text-xs">
                   Potential Changepoints
                 </FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{config.n_changepoints}</span>
                   <ResetIndicator
                     isModified={
@@ -635,6 +641,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 id="n_changepoints"
                 aria-label="Number of Changepoints"
                 type="number"
+                autoComplete="off"
                 min={0}
                 max={100}
                 value={config.n_changepoints}
@@ -655,7 +662,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 <FieldLabel className="text-xs">
                   Changepoint Prior Scale
                 </FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{config.changepoint_prior_scale}</span>
                   <ResetIndicator
                     isModified={
@@ -689,7 +696,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
             <div className="flex flex-col gap-2 md:col-span-2">
               <div className="flex justify-between items-center text-xs">
                 <FieldLabel className="text-xs">Changepoint Range</FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{(config.changepoint_range * 100).toFixed(0)}%</span>
                   <ResetIndicator
                     isModified={
@@ -727,6 +734,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 id="manual-changepoint-date"
                 aria-label="Manual Changepoint Date"
                 type="date"
+                autoComplete="off"
                 value={cpDate}
                 onChange={(e) => setCpDate(e.target.value)}
                 className="h-8 text-xs max-w-xs"
@@ -738,7 +746,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 disabled={!cpDate}
                 className="h-8 text-xs gap-1"
               >
-                <Plus data-icon="inline-start" /> Add Date
+                <Plus aria-hidden="true" data-icon="inline-start" /> Add Date
               </Button>
             </div>
             {config.changepoints && config.changepoints.length > 0 && (
@@ -747,7 +755,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                   <Badge
                     key={idx}
                     variant="secondary"
-                    className="gap-1 font-mono text-[11px]"
+                    className="gap-1 font-mono text-[11px] tabular-nums"
                   >
                     {d}
                     <button
@@ -767,7 +775,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
 
         {/* Prior Scales Sliders */}
         <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
-          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider text-pretty">
             Seasonality & Holiday Prior Scales
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -776,7 +784,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 <FieldLabel className="text-xs">
                   Seasonality Prior Scale
                 </FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{config.seasonality_prior_scale}</span>
                   <ResetIndicator
                     isModified={
@@ -810,7 +818,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 <FieldLabel className="text-xs">
                   Holidays Prior Scale
                 </FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{config.holidays_prior_scale}</span>
                   <ResetIndicator
                     isModified={
@@ -845,7 +853,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
         <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Layers3 className="size-4 text-primary" />
+              <Layers3 aria-hidden="true" className="size-4 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-wider">
                 Custom Seasonalities
               </span>
@@ -867,7 +875,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                     className="flex items-center justify-between rounded border bg-background px-3 py-1 text-xs"
                   >
                     <span className="font-semibold">{s.name}</span>
-                    <span className="font-mono text-muted-foreground">
+                    <span className="font-mono text-muted-foreground tabular-nums">
                       Period: {s.period}d (Fourier {s.fourier_order})
                     </span>
                     <Button
@@ -878,7 +886,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                       aria-label={`Remove seasonality ${s.name}`}
                       className="size-6 text-destructive hover:bg-destructive/10 p-0"
                     >
-                      <Trash2 className="size-3" />
+                      <Trash2 aria-hidden="true" className="size-3" />
                     </Button>
                   </div>
                 ))}
@@ -889,6 +897,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
             <Input
               id="seasonality-name"
               aria-label="Seasonality Name"
+              autoComplete="off"
               placeholder="Seasonality Name"
               value={seasName}
               onChange={(e) => setSeasName(e.target.value)}
@@ -898,6 +907,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
               id="seasonality-period"
               aria-label="Seasonality Period"
               type="number"
+              autoComplete="off"
               placeholder="Period (days)"
               value={seasPeriod}
               onChange={(e) =>
@@ -909,6 +919,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
               id="seasonality-fourier"
               aria-label="Seasonality Fourier Order"
               type="number"
+              autoComplete="off"
               placeholder="Fourier Order"
               value={seasFourier}
               onChange={(e) =>
@@ -923,7 +934,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
               disabled={!seasName || seasPeriod <= 0}
               className="h-8 text-xs gap-1 sm:col-span-1"
             >
-              <Plus data-icon="inline-start" /> Add
+              <Plus aria-hidden="true" data-icon="inline-start" /> Add
             </Button>
           </div>
         </div>
@@ -932,7 +943,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
         <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Activity className="size-4 text-primary" />
+              <Activity aria-hidden="true" className="size-4 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-wider">
                 Additional Regressors
               </span>
@@ -960,7 +971,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                     aria-label={`Remove regressor ${r.name}`}
                     className="size-6 text-destructive hover:bg-destructive/10 p-0"
                   >
-                    <Trash2 className="size-3" />
+                    <Trash2 className="size-3" aria-hidden="true" />
                   </Button>
                 </div>
               ))}
@@ -983,7 +994,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
               disabled={!regName}
               className="h-8 text-xs gap-1"
             >
-              <Plus data-icon="inline-start" /> Add Regressor
+              <Plus data-icon="inline-start" aria-hidden="true" /> Add Regressor
             </Button>
           </div>
         </div>
@@ -991,7 +1002,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
         {/* Seasonalities Toggles */}
         <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider text-pretty">
               Seasonality Components
             </h4>
             <ResetIndicator
@@ -1069,14 +1080,14 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
 
         {/* Uncertainty & MCMC */}
         <div className="flex flex-col gap-3 rounded-lg border p-3.5 bg-muted/20">
-          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider text-pretty">
             Uncertainty & MCMC
           </h4>
           <div className="flex flex-col gap-3 text-xs">
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <FieldLabel className="text-xs">Interval Width</FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{(config.interval_width * 100).toFixed(0)}%</span>
                   <ResetIndicator
                     isModified={
@@ -1108,7 +1119,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 <FieldLabel className="text-xs">
                   MCMC Samples (Uncertainty)
                 </FieldLabel>
-                <div className="flex items-center gap-1 font-mono text-muted-foreground">
+                <div className="flex items-center gap-1 font-mono text-muted-foreground tabular-nums">
                   <span>{config.mcmc_samples}</span>
                   <ResetIndicator
                     isModified={
@@ -1126,6 +1137,7 @@ export const AdvancedModelSection = memo(function AdvancedModelSection({
                 id="mcmc_samples"
                 aria-label="MCMC Samples"
                 type="number"
+                autoComplete="off"
                 min={0}
                 max={100}
                 value={config.mcmc_samples}
